@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-07
+
+### Added (阶段2: 核心提醒功能)
+- 数据模型：Medication、Schedule（支持5种提醒规则）、Record
+- 服务层：NotificationService、VoiceService、SchedulerService
+- 状态管理：MedicationProvider、ReminderProvider、SettingsProvider
+- 内置药品库：200种常用药品和保健品
+- 首页：今日待服清单、合并提醒、已完成折叠区
+- 药箱：活跃/停用项目管理、搜索、删除
+- 添加药品：内置药品库搜索、剂量用法、多天计划
+- 药品详情：编辑/停用/恢复/删除
+
+### Dependencies
+- flutter_tts: ^4.0.2
+
 ## [1.0.0] - 2026-03-07
 
 ### Added
