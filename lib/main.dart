@@ -1,6 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'theme/warm_theme.dart';
+import 'db/database_helper.dart';
+import 'providers/medication_provider.dart';
+import 'providers/reminder_provider.dart';
+import 'providers/settings_provider.dart';
+import 'services/scheduler_service.dart';
+import 'screens/home_screen.dart';
+import 'screens/medicine_box_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化数据库
+  await DatabaseHelper().database;
+
+  // 初始化调度服务
+  await SchedulerService().initialize();
+
   runApp(const MedReminderApp());
 }
 
@@ -9,13 +26,19 @@ class MedReminderApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '服药宝',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MedicationProvider()),
+        ChangeNotifierProvider(create: (_) => ReminderProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()..loadSettings()),
+      ],
+      child: MaterialApp(
+        title: '服药宝',
+        // 使用温暖舒适主题
+        theme: WarmTheme.themeData,
+        debugShowCheckedModeBanner: false,
+        home: const MainScreen(),
       ),
-      home: const MainScreen(),
     );
   }
 }
@@ -30,11 +53,19 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
+  final List<Widget> _screens = const [
+    HomeScreen(),
+    MedicineBoxScreen(),
+    PlaceholderScreen(title: '记录'),
+    PlaceholderScreen(title: '设置'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: const Center(
-        child: Text('服药宝 - 页面开发中'),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -65,6 +96,42 @@ class _MainScreenState extends State<MainScreen> {
             label: '设置',
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 占位页面
+class PlaceholderScreen extends StatelessWidget {
+  final String title;
+
+  const PlaceholderScreen({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              title == '记录' ? Icons.calendar_month : Icons.settings,
+              size: 80,
+              color: theme.colorScheme.outlineVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '$title 开发中',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
