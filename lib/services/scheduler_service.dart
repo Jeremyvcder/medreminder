@@ -342,12 +342,22 @@ class SchedulerService {
 
     for (var record in pendingRecords) {
       final medId = record['medication_id'];
-      final medication = medications.firstWhere((m) => m['id'] == medId);
+      // 防止药品列表为空或找不到对应药品时崩溃
+      try {
+        final medication = medications.firstWhere(
+          (m) => m['id'] == medId,
+          orElse: () => <String, dynamic>{},
+        );
+        if (medication.isEmpty) continue; // 跳过找不到的药品
 
-      result.add({
-        'record': record,
-        'medication': medication,
-      });
+        result.add({
+          'record': record,
+          'medication': medication,
+        });
+      } catch (e) {
+        // 跳过出错的记录
+        continue;
+      }
     }
 
     // 按时间排序
@@ -385,12 +395,22 @@ class SchedulerService {
 
     for (var record in completedRecords) {
       final medId = record['medication_id'];
-      final medication = medications.firstWhere((m) => m['id'] == medId);
+      // 防止药品列表为空或找不到对应药品时崩溃
+      try {
+        final medication = medications.firstWhere(
+          (m) => m['id'] == medId,
+          orElse: () => <String, dynamic>{},
+        );
+        if (medication.isEmpty) continue; // 跳过找不到的药品
 
-      result.add({
-        'record': record,
-        'medication': medication,
-      });
+        result.add({
+          'record': record,
+          'medication': medication,
+        });
+      } catch (e) {
+        // 跳过出错的记录
+        continue;
+      }
     }
 
     // 按时间排序

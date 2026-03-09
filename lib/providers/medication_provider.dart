@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../db/database_helper.dart';
 import '../models/medication.dart';
+import '../services/scheduler_service.dart';
 
 /// 药品状态管理Provider
 class MedicationProvider extends ChangeNotifier {
@@ -75,6 +76,12 @@ class MedicationProvider extends ChangeNotifier {
 
       await _db.insertMedication(medication.toMap());
       await loadMedications();
+
+      // 等待数据库操作完成后再生成提醒
+      await Future.delayed(const Duration(milliseconds: 300));
+      // 生成今日提醒记录
+      await SchedulerService().scheduleTodayReminders();
+
       return medication;
     } catch (e) {
       _error = '添加药品失败: $e';
@@ -89,6 +96,12 @@ class MedicationProvider extends ChangeNotifier {
       final updated = medication.copyWith(updatedAt: DateTime.now());
       await _db.updateMedication(updated.id, updated.toMap());
       await loadMedications();
+
+      // 等待数据库操作完成后再生成提醒
+      await Future.delayed(const Duration(milliseconds: 300));
+      // 重新生成今日提醒
+      await SchedulerService().scheduleTodayReminders();
+
       return true;
     } catch (e) {
       _error = '更新药品失败: $e';
@@ -206,6 +219,11 @@ class MedicationProvider extends ChangeNotifier {
         medications.add(medication);
       }
     }
+
+    // 等待数据库操作完成后再生成提醒
+    await Future.delayed(const Duration(milliseconds: 300));
+    // 统一生成今日提醒（避免多次调用）
+    await SchedulerService().scheduleTodayReminders();
 
     return medications;
   }

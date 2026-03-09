@@ -44,17 +44,30 @@ class ReminderProvider extends ChangeNotifier {
 
     try {
       final rawReminders = await _schedulerService.getTodayReminders();
-      _pendingReminders = rawReminders.map((data) {
-        return ReminderItem(
-          record: Record.fromMap(data['record']),
-          medication: Medication.fromMap(data['medication']),
-        );
-      }).toList();
+      _pendingReminders = [];
+
+      for (var data in rawReminders) {
+        try {
+          // 防止数据格式异常导致崩溃
+          if (data['record'] == null || data['medication'] == null) {
+            continue;
+          }
+          _pendingReminders.add(ReminderItem(
+            record: Record.fromMap(Map<String, dynamic>.from(data['record'])),
+            medication: Medication.fromMap(Map<String, dynamic>.from(data['medication'])),
+          ));
+        } catch (e) {
+          // 跳过解析失败的记录
+          continue;
+        }
+      }
 
       // 合并同一时间的提醒
       _mergeRemindersByTime();
     } catch (e) {
       _error = '加载提醒失败: $e';
+      // 确保出错时列表为空而不是保留旧数据
+      _pendingReminders = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -104,15 +117,27 @@ class ReminderProvider extends ChangeNotifier {
   Future<void> loadCompletedReminders() async {
     try {
       final rawReminders = await _schedulerService.getCompletedReminders();
-      _completedReminders = rawReminders.map((data) {
-        return ReminderItem(
-          record: Record.fromMap(data['record']),
-          medication: Medication.fromMap(data['medication']),
-        );
-      }).toList();
+      _completedReminders = [];
+
+      for (var data in rawReminders) {
+        try {
+          // 防止数据格式异常导致崩溃
+          if (data['record'] == null || data['medication'] == null) {
+            continue;
+          }
+          _completedReminders.add(ReminderItem(
+            record: Record.fromMap(Map<String, dynamic>.from(data['record'])),
+            medication: Medication.fromMap(Map<String, dynamic>.from(data['medication'])),
+          ));
+        } catch (e) {
+          // 跳过解析失败的记录
+          continue;
+        }
+      }
       notifyListeners();
     } catch (e) {
       _error = '加载已完成记录失败: $e';
+      _completedReminders = [];
       notifyListeners();
     }
   }

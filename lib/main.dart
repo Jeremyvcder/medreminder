@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'theme/warm_theme.dart';
 import 'db/database_helper.dart';
 import 'providers/medication_provider.dart';
@@ -11,6 +12,9 @@ import 'screens/medicine_box_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化日期格式化（解决LocaleDataException）
+  await initializeDateFormatting('zh_CN', null);
 
   // 初始化数据库
   await DatabaseHelper().database;

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// 药品类别枚举
 enum MedicationCategory {
   medicine, // 药品
@@ -153,36 +155,13 @@ class Schedule {
 
   /// 解析JSON字符串
   static Map<String, dynamic> _parseJson(String json) {
-    // 简单解析JSON
-    final result = <String, dynamic>{};
-    final content = json.trim();
-    if (content.startsWith('{') && content.endsWith('}')) {
-      final pairs = content.substring(1, content.length - 1).split(',');
-      for (var pair in pairs) {
-        final keyValue = pair.split(':');
-        if (keyValue.length == 2) {
-          final key = keyValue[0].trim().replaceAll('"', '');
-          final value = keyValue[1].trim();
-          if (value.startsWith('"') && value.endsWith('"')) {
-            result[key] = value.substring(1, value.length - 1);
-          } else if (value == 'null') {
-            result[key] = null;
-          } else if (value == 'true') {
-            result[key] = true;
-          } else if (value == 'false') {
-            result[key] = false;
-          } else {
-            final intVal = int.tryParse(value);
-            if (intVal != null) {
-              result[key] = intVal;
-            } else {
-              result[key] = value;
-            }
-          }
-        }
-      }
+    try {
+      // 使用 dart:convert 正确解析 JSON
+      return jsonDecode(json) as Map<String, dynamic>;
+    } catch (e) {
+      // 如果解析失败，返回空 Map
+      return {};
     }
-    return result;
   }
 
   /// 解析类型字符串

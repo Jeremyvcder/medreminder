@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/medication.dart';
 import '../providers/medication_provider.dart';
+import '../providers/reminder_provider.dart';
 import '../data/medication_library.dart';
 
 /// 添加药品页面
@@ -102,6 +103,19 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     }
   }
 
+  /// 编辑提醒时间
+  Future<void> _editReminderTime(int index) async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: _reminderTimes[index],
+    );
+    if (time != null) {
+      setState(() {
+        _reminderTimes[index] = time;
+      });
+    }
+  }
+
   Future<void> _selectStartDate() async {
     final date = await showDatePicker(
       context: context,
@@ -173,10 +187,14 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     }
 
     if (mounted) {
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isEditing ? '保存成功' : '添加成功')),
-      );
+      // 刷新首页数据，确保提醒加载完成后再返回
+      await context.read<ReminderProvider>().loadTodayReminders();
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_isEditing ? '保存成功' : '添加成功')),
+        );
+      }
     }
   }
 
@@ -364,12 +382,21 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               return ListTile(
                 leading: const Icon(Icons.access_time),
                 title: Text('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}'),
-                trailing: _reminderTimes.length > 1
-                    ? IconButton(
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _editReminderTime(index),
+                    ),
+                    if (_reminderTimes.length > 1)
+                      IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () => _removeReminderTime(index),
-                      )
-                    : null,
+                      ),
+                  ],
+                ),
+                onTap: () => _editReminderTime(index),
               );
             }),
             TextButton.icon(
