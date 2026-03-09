@@ -35,6 +35,9 @@ dependencies:
   # 时间相关
   timezone: ^0.9.2
 
+  # 语音播报
+  flutter_tts: ^4.0.2
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

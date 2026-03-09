@@ -50,6 +50,7 @@ class SchedulerService {
   /// 调度今日所有提醒
   Future<void> scheduleTodayReminders() async {
     final medications = await _db.getMedications(isActive: true);
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -62,7 +63,9 @@ class SchedulerService {
 
       for (var time in scheduledTimes) {
         // 跳过已过时间的提醒
-        if (time.isBefore(now)) continue;
+        if (time.isBefore(now)) {
+          continue;
+        }
 
         final timeKey =
             '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
@@ -100,59 +103,75 @@ class SchedulerService {
   /// 调度单个药品提醒
   Future<void> _scheduleSingleReminder(
       Medication medication, DateTime scheduledTime) async {
+    // 先创建待服记录，确保记录一定被创建
+    await _createPendingRecord(medication, scheduledTime);
+
     final notificationId = NotificationService.generateNotificationId(
       medication.id,
       scheduledTime,
     );
 
-    // 发送通知
-    await _notificationService.showMedicationReminder(
-      notificationId: notificationId,
-      medication: medication,
-      scheduledTime: scheduledTime,
-    );
+    // 发送通知（失败不影响记录创建）
+    try {
+      await _notificationService.showMedicationReminder(
+        notificationId: notificationId,
+        medication: medication,
+        scheduledTime: scheduledTime,
+      );
+    } catch (e) {
+      // 通知失败不影响记录创建
+    }
 
-    // 发送语音提醒
-    await _voiceService.speakMedicationReminder(
-      medicationName: medication.name,
-      dosage: medication.dosage,
-      isMedicine: medication.category == MedicationCategory.medicine,
-    );
-
-    // 创建待服记录
-    await _createPendingRecord(medication, scheduledTime);
+    // 发送语音提醒（失败不影响记录创建）
+    try {
+      await _voiceService.speakMedicationReminder(
+        medicationName: medication.name,
+        dosage: medication.dosage,
+        isMedicine: medication.category == MedicationCategory.medicine,
+      );
+    } catch (e) {
+      // 语音失败不影响记录创建
+    }
   }
 
   /// 调度合并提醒
   Future<void> _scheduleMergedReminder(
       List<Medication> medications, DateTime scheduledTime) async {
+    // 先为每个药品创建待服记录，确保记录一定被创建
+    for (var medication in medications) {
+      await _createPendingRecord(medication, scheduledTime);
+    }
+
     final notificationId = NotificationService.generateMergedNotificationId(
       scheduledTime,
     );
 
-    // 发送合并通知
-    await _notificationService.showMergedReminder(
-      notificationId: notificationId,
-      medications: medications,
-      scheduledTime: scheduledTime,
-    );
+    // 发送合并通知（失败不影响记录创建）
+    try {
+      await _notificationService.showMergedReminder(
+        notificationId: notificationId,
+        medications: medications,
+        scheduledTime: scheduledTime,
+      );
+    } catch (e) {
+      // 通知失败不影响记录创建
+    }
 
-    // 发送合并语音提醒
-    await _voiceService.speakMergedReminder(
-      medications: medications
-          .map((m) => {
-                'name': m.name,
-                'dosage': m.dosage,
-                'isMedicine': m.category == MedicationCategory.medicine
-                    ? 'true'
-                    : 'false',
-              })
-          .toList(),
-    );
-
-    // 为每个药品创建待服记录
-    for (var medication in medications) {
-      await _createPendingRecord(medication, scheduledTime);
+    // 发送合并语音提醒（失败不影响记录创建）
+    try {
+      await _voiceService.speakMergedReminder(
+        medications: medications
+            .map((m) => {
+                  'name': m.name,
+                  'dosage': m.dosage,
+                  'isMedicine': m.category == MedicationCategory.medicine
+                      ? 'true'
+                      : 'false',
+                })
+            .toList(),
+      );
+    } catch (e) {
+      // 语音失败不影响记录创建
     }
   }
 
@@ -166,7 +185,9 @@ class SchedulerService {
       endDate: scheduledTime.add(const Duration(minutes: 1)),
     );
 
-    if (existingRecords.isNotEmpty) return;
+    if (existingRecords.isNotEmpty) {
+      return;
+    }
 
     final record = {
       'id': _uuid.v4(),

@@ -74,3 +74,29 @@ Encryption key is stored securely in device Keychain via flutter_secure_storage.
 - The app uses a bottom navigation with 4 tabs: Home (首页), Medicine Box (药箱), Records (记录), Settings (设置)
 - Key features include: medication reminders, multi-day plans, medication library, large text mode, voice notifications
 - **Code comments should be in Chinese (中文)**
+
+## 版本记录规范
+
+### 存档（当我说"存档"或"提交"时）
+1. 运行 git diff 检查本次改动
+2. 执行 git add . 和 git commit（根据改动自动生成备注）
+3. 在 CHANGELOG.md 顶部添加记录，格式：
+   ## YYYY-MM-DD HH:mm
+   - 改动内容
+
+### 回退（当我说"回退"或"撤销"时）
+1. 先告诉我会回退到哪个版本（显示上一次的提交信息）
+2. 等我确认后再执行回退
+3. 回退后在 CHANGELOG.md 顶部记录：
+   ## YYYY-MM-DD HH:mm
+   - 回退：撤销了 xxx 改动
+
+### 查看历史（当我说"历史"或"记录"时）
+显示最近 5 次提交的简要信息
+
+## 其他开发规范
+1. 在编写任何代码前，请先描述你的方案并等待批准。如果需求不明确，在编写任何代码之前务必提出澄清问题
+2. 如果任何一项任务需要修改超过3个文件，请先停下来，将其分解成更小的任务
+3. 编写代码后，列出可能出现的问题，并建议相应的测试用例来覆盖这些问题
+4. 当发现bug时，首先要编写一个能够重现该bug的测试，然后不断修复它，直到测试通过为止
+5. 每次我纠正你之后，就在CLAUDE.md文件中添加一条新规则，以防止再发生这样的情况
