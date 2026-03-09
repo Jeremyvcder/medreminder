@@ -8,12 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- 首页不显示提醒的问题：修复 scheduler_service.dart 中记录创建顺序，确保通知失败时记录仍能创建（备注：仍未解决）
-- 保存药品无反应的问题：修复 medicine_box_screen.dart 和 medication_provider.dart 在 build 期间调用 setState 的问题（备注：代码rewind到了之前没问题的状态）
-- 优化添加药品后的数据刷新逻辑，先刷新数据再返回首页（备注：仍未解决）
+- 首页不显示提醒的问题：将 `_createPendingRecord` 移到通知发送之前，确保通知权限异常时记录仍能创建
+- 保存药品无反应的问题：修复 medicine_box_screen.dart 和 medication_provider.dart 在 build 期间调用 setState 的问题
+- 优化添加药品后的数据刷新逻辑，先刷新数据再返回首页
 
 ### Added
-- 添加药品页面：提醒时间支持点击直接编辑（不再需要添加新时间再删除旧的）
+- 添加药品页面：提醒时间支持点击直接编辑
 
 ## [1.1.0] - 2026-03-07
 
