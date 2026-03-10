@@ -139,28 +139,29 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         .map((t) => '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}')
         .toList();
 
-    if (_isEditing) {
-      // 编辑模式
-      final updated = widget.medication!.copyWith(
-        name: _nameController.text,
-        category: _category,
-        dosage: _dosageController.text,
-        usage: _usageController.text.isEmpty ? null : _usageController.text,
-        schedule: Schedule.daily(times),
-      );
-      await provider.updateMedication(updated);
-    } else if (_isMultiDay) {
-      // 创建多天计划
-      await provider.createMultiDayPlan(
-        name: _nameController.text,
-        category: _category,
-        dosage: _dosageController.text,
-        usage: _usageController.text.isEmpty ? null : _usageController.text,
-        startDate: _startDate,
-        daysCount: _multiDayDays,
-        times: times,
-      );
-    } else {
+    try {
+      if (_isEditing) {
+        // 编辑模式
+        final updated = widget.medication!.copyWith(
+          name: _nameController.text,
+          category: _category,
+          dosage: _dosageController.text,
+          usage: _usageController.text.isEmpty ? null : _usageController.text,
+          schedule: Schedule.daily(times),
+        );
+        await provider.updateMedication(updated);
+      } else if (_isMultiDay) {
+        // 创建多天计划
+        await provider.createMultiDayPlan(
+          name: _nameController.text,
+          category: _category,
+          dosage: _dosageController.text,
+          usage: _usageController.text.isEmpty ? null : _usageController.text,
+          startDate: _startDate,
+          daysCount: _multiDayDays,
+          times: times,
+        );
+      } else {
       // 创建普通提醒
       Schedule schedule;
       switch (_scheduleType) {
@@ -185,15 +186,24 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         schedule: schedule,
       );
     }
-
-    if (mounted) {
-      // 刷新首页数据，确保提醒加载完成后再返回
-      await context.read<ReminderProvider>().loadTodayReminders();
+    } catch (e) {
+      // 保存失败时显示错误
       if (mounted) {
-        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_isEditing ? '保存成功' : '添加成功')),
+          SnackBar(content: Text('保存失败: $e')),
         );
+      }
+      return;
+    } finally {
+      // 刷新首页数据，确保提醒加载完成后再返回
+      if (mounted) {
+        await context.read<ReminderProvider>().loadTodayReminders();
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(_isEditing ? '保存成功' : '添加成功')),
+          );
+        }
       }
     }
   }

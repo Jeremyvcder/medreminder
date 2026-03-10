@@ -54,31 +54,62 @@ class SchedulerService {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // 按时间分组的提醒
-    final Map<String, List<Medication>> timeGrouped = {};
+    // 按时间分组的提醒（未来的）
+    final Map<String, List<Medication>> futureTimeGrouped = {};
+    // 已过去时间点的提醒（仍需创建记录，但不发送通知）
+    final Map<String, List<Medication>> pastTimeGrouped = {};
 
     for (var medMap in medications) {
       final medication = Medication.fromMap(medMap);
       final scheduledTimes = medication.schedule.getTodayScheduledTimes();
 
       for (var time in scheduledTimes) {
-        // 跳过已过时间的提醒
-        if (time.isBefore(now)) {
-          continue;
-        }
-
         final timeKey =
             '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 
-        if (!timeGrouped.containsKey(timeKey)) {
-          timeGrouped[timeKey] = [];
+        // 根据是否已过去分别处理
+        if (time.isBefore(now)) {
+          // 已过去的时间：仍需创建记录，但不发送通知
+          if (!pastTimeGrouped.containsKey(timeKey)) {
+            pastTimeGrouped[timeKey] = [];
+          }
+          pastTimeGrouped[timeKey]!.add(medication);
+        } else {
+          // 未来的时间：创建记录并发送通知
+          if (!futureTimeGrouped.containsKey(timeKey)) {
+            futureTimeGrouped[timeKey] = [];
+          }
+          futureTimeGrouped[timeKey]!.add(medication);
         }
-        timeGrouped[timeKey]!.add(medication);
       }
     }
 
-    // 为每个时间点发送通知
-    for (var entry in timeGrouped.entries) {
+    // 先处理已过去的提醒（只创建记录，不发通知）
+    for (var entry in pastTimeGrouped.entries) {
+      final timeParts = entry.key.split(':');
+      final scheduledTime = DateTime(
+        today.year,
+        today.month,
+        today.day,
+        int.parse(timeParts[0]),
+        int.parse(timeParts[1]),
+      );
+
+      final meds = entry.value;
+
+      if (meds.length == 1) {
+        // 单个药品 - 只创建记录
+        await _createPendingRecord(meds.first, scheduledTime);
+      } else {
+        // 多个药品 - 为每个创建记录
+        for (var med in meds) {
+          await _createPendingRecord(med, scheduledTime);
+        }
+      }
+    }
+
+    // 再处理未来的提醒（创建记录并发送通知）
+    for (var entry in futureTimeGrouped.entries) {
       final timeParts = entry.key.split(':');
       final scheduledTime = DateTime(
         today.year,
@@ -111,27 +142,31 @@ class SchedulerService {
       scheduledTime,
     );
 
-    // 发送通知（失败不影响记录创建）
-    try {
-      await _notificationService.showMedicationReminder(
-        notificationId: notificationId,
-        medication: medication,
-        scheduledTime: scheduledTime,
-      );
-    } catch (e) {
-      // 通知失败不影响记录创建
-    }
+    // 异步发送通知，不阻塞主流程
+    Future.microtask(() async {
+      try {
+        await _notificationService.showMedicationReminder(
+          notificationId: notificationId,
+          medication: medication,
+          scheduledTime: scheduledTime,
+        );
+      } catch (e) {
+        // 通知失败不影响记录创建
+      }
+    });
 
-    // 发送语音提醒（失败不影响记录创建）
-    try {
-      await _voiceService.speakMedicationReminder(
-        medicationName: medication.name,
-        dosage: medication.dosage,
-        isMedicine: medication.category == MedicationCategory.medicine,
-      );
-    } catch (e) {
-      // 语音失败不影响记录创建
-    }
+    // 异步发送语音提醒，不阻塞主流程
+    Future.microtask(() async {
+      try {
+        await _voiceService.speakMedicationReminder(
+          medicationName: medication.name,
+          dosage: medication.dosage,
+          isMedicine: medication.category == MedicationCategory.medicine,
+        );
+      } catch (e) {
+        // 语音失败不影响记录创建
+      }
+    });
   }
 
   /// 调度合并提醒
@@ -146,33 +181,37 @@ class SchedulerService {
       scheduledTime,
     );
 
-    // 发送合并通知（失败不影响记录创建）
-    try {
-      await _notificationService.showMergedReminder(
-        notificationId: notificationId,
-        medications: medications,
-        scheduledTime: scheduledTime,
-      );
-    } catch (e) {
-      // 通知失败不影响记录创建
-    }
+    // 异步发送合并通知，不阻塞主流程
+    Future.microtask(() async {
+      try {
+        await _notificationService.showMergedReminder(
+          notificationId: notificationId,
+          medications: medications,
+          scheduledTime: scheduledTime,
+        );
+      } catch (e) {
+        // 通知失败不影响记录创建
+      }
+    });
 
-    // 发送合并语音提醒（失败不影响记录创建）
-    try {
-      await _voiceService.speakMergedReminder(
-        medications: medications
-            .map((m) => {
-                  'name': m.name,
-                  'dosage': m.dosage,
-                  'isMedicine': m.category == MedicationCategory.medicine
-                      ? 'true'
-                      : 'false',
-                })
-            .toList(),
-      );
-    } catch (e) {
-      // 语音失败不影响记录创建
-    }
+    // 异步发送合并语音提醒，不阻塞主流程
+    Future.microtask(() async {
+      try {
+        await _voiceService.speakMergedReminder(
+          medications: medications
+              .map((m) => {
+                    'name': m.name,
+                    'dosage': m.dosage,
+                    'isMedicine': m.category == MedicationCategory.medicine
+                        ? 'true'
+                        : 'false',
+                  })
+              .toList(),
+        );
+      } catch (e) {
+        // 语音失败不影响记录创建
+      }
+    });
   }
 
   /// 创建待服记录

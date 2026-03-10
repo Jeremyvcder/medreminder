@@ -51,6 +51,7 @@ class MedicationProvider extends ChangeNotifier {
   }
 
   /// 添加药品
+  /// [scheduleReminder] 是否立即生成提醒，批量添加时设为false以提高性能
   Future<Medication?> addMedication({
     required String name,
     required MedicationCategory category,
@@ -58,6 +59,7 @@ class MedicationProvider extends ChangeNotifier {
     String? usage,
     required Schedule schedule,
     String? planGroupId,
+    bool scheduleReminder = true,
   }) async {
     try {
       final now = DateTime.now();
@@ -77,10 +79,13 @@ class MedicationProvider extends ChangeNotifier {
       await _db.insertMedication(medication.toMap());
       await loadMedications();
 
-      // 等待数据库操作完成后再生成提醒
-      await Future.delayed(const Duration(milliseconds: 300));
-      // 生成今日提醒记录
-      await SchedulerService().scheduleTodayReminders();
+      // 批量添加时跳过单独的提醒生成，由调用方统一处理
+      if (scheduleReminder) {
+        // 等待数据库操作完成后再生成提醒
+        await Future.delayed(const Duration(milliseconds: 300));
+        // 生成今日提醒记录
+        await SchedulerService().scheduleTodayReminders();
+      }
 
       return medication;
     } catch (e) {
@@ -206,6 +211,7 @@ class MedicationProvider extends ChangeNotifier {
         dosages: [dayDosage],
       );
 
+      // 批量添加时不单独生成提醒
       final medication = await addMedication(
         name: name,
         category: category,
@@ -213,6 +219,7 @@ class MedicationProvider extends ChangeNotifier {
         usage: usage,
         schedule: schedule,
         planGroupId: planGroupId,
+        scheduleReminder: false,
       );
 
       if (medication != null) {
@@ -220,9 +227,8 @@ class MedicationProvider extends ChangeNotifier {
       }
     }
 
-    // 等待数据库操作完成后再生成提醒
-    await Future.delayed(const Duration(milliseconds: 300));
-    // 统一生成今日提醒（避免多次调用）
+    // 统一生成今日提醒（只调用一次）
+    await Future.delayed(const Duration(milliseconds: 100));
     await SchedulerService().scheduleTodayReminders();
 
     return medications;

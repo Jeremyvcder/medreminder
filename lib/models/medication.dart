@@ -147,7 +147,7 @@ class Schedule {
       startDate: map['startDate'] != null
           ? DateTime.parse(map['startDate'] as String)
           : null,
-      daysCount: map['days'] is int ? map['days'] as int : null,
+      daysCount: map['daysCount'] is int ? map['daysCount'] as int : null,
       dosages:
           map['dosages'] != null ? List<String>.from(map['dosages']) : null,
     );
@@ -201,7 +201,7 @@ class Schedule {
       buffer.write(',"startDate":"${startDate!.toIso8601String().split('T')[0]}"');
     }
     if (daysCount != null) {
-      buffer.write(',"days":$daysCount');
+      buffer.write(',"daysCount":$daysCount');
     }
     if (dosages != null) {
       buffer.write(',"dosages":${_listToJson(dosages!)}');
