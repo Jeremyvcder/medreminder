@@ -93,9 +93,6 @@ class _MedReminderAppState extends State<MedReminderApp> {
 
   /// 构建引导页面App
   Widget _buildOnboardingApp(BuildContext context, SettingsProvider settings) {
-    // 保存context引用
-    final onboardingContext = context;
-
     return MaterialApp(
       title: '服药宝',
       theme: WarmTheme.themeData,
@@ -104,10 +101,8 @@ class _MedReminderAppState extends State<MedReminderApp> {
         body: PrivacyPolicyPage(
           onAgreed: () async {
             await settings.agreePrivacy();
-            // 使用Future.microtask确保在下一帧执行弹窗
-            Future.microtask(() {
-              _showNotificationPermissionDialog(onboardingContext);
-            });
+            // 直接请求系统通知权限，系统会自动弹出权限请求对话框
+            await NotificationService().requestPermissions();
           },
         ),
       ),
