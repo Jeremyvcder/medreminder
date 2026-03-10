@@ -206,7 +206,7 @@ class MedicationProvider extends ChangeNotifier {
 
       final schedule = Schedule.multiday(
         dayDate,
-        1, // 每天作为单独的一条记录
+        daysCount, // 计划的总天数
         times,
         dosages: [dayDosage],
       );

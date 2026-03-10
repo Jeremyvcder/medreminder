@@ -5,6 +5,17 @@ import '../providers/medication_provider.dart';
 import 'add_medication_screen.dart';
 import 'medication_detail_screen.dart';
 
+/// 药品分组（多天计划合并显示）
+class _MedicationGroup {
+  final List<Medication> medications;
+  final String? subtitle;
+
+  _MedicationGroup({
+    required this.medications,
+    this.subtitle,
+  });
+}
+
 /// 药箱页面 - 药品列表管理
 class MedicineBoxScreen extends StatefulWidget {
   const MedicineBoxScreen({super.key});
@@ -103,45 +114,51 @@ class _MedicineBoxScreenState extends State<MedicineBoxScreen> {
                   );
                 }
 
+                // 按 planGroupId 分组（多天计划合并显示）
+                final groupedActive = _groupMedications(filteredActive);
+                final groupedInactive = _groupMedications(filteredInactive);
+
                 return RefreshIndicator(
                   onRefresh: _loadMedications,
                   child: ListView(
                     children: [
                       // 活跃项目
-                      if (filteredActive.isNotEmpty) ...[
+                      if (groupedActive.isNotEmpty) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
                           ),
                           child: Text(
-                            '活跃项目 (${filteredActive.length})',
+                            '活跃项目 (${groupedActive.length})',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        ...filteredActive.map((med) => _MedicationListTile(
-                              medication: med,
-                              onTap: () => _navigateToDetail(med.id),
-                              onDelete: () => _deleteMedication(med.id),
+                        ...groupedActive.map((item) => _MedicationListTile(
+                              medication: item.medications.first,
+                              subtitle: item.subtitle,
+                              onTap: () => _navigateToDetail(item.medications.first.id),
+                              onDelete: () => _deleteMedication(item.medications.first.id),
                             )),
                       ],
 
                       // 已停用项目
-                      if (filteredInactive.isNotEmpty) ...[
+                      if (groupedInactive.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         ExpansionTile(
                           title: Text(
-                            '已停用项目 (${filteredInactive.length})',
+                            '已停用项目 (${groupedInactive.length})',
                             style: theme.textTheme.titleMedium,
                           ),
-                          children: filteredInactive.map((med) => _MedicationListTile(
-                                medication: med,
+                          children: groupedInactive.map((item) => _MedicationListTile(
+                                medication: item.medications.first,
+                                subtitle: item.subtitle,
                                 isInactive: true,
-                                onTap: () => _navigateToDetail(med.id),
-                                onDelete: () => _deleteMedication(med.id),
-                                onRestore: () => _restoreMedication(med.id),
+                                onTap: () => _navigateToDetail(item.medications.first.id),
+                                onDelete: () => _deleteMedication(item.medications.first.id),
+                                onRestore: () => _restoreMedication(item.medications.first.id),
                               )).toList(),
                         ),
                       ],
@@ -170,6 +187,30 @@ class _MedicineBoxScreenState extends State<MedicineBoxScreen> {
         builder: (_) => MedicationDetailScreen(medicationId: medicationId),
       ),
     );
+  }
+
+  /// 药品分组（多天计划合并显示）
+  List<_MedicationGroup> _groupMedications(List<Medication> medications) {
+    final Map<String, _MedicationGroup> groups = {};
+
+    for (var med in medications) {
+      final key = med.planGroupId ?? med.id;
+      if (groups.containsKey(key)) {
+        groups[key]!.medications.add(med);
+      } else {
+        // 计算副标题（显示计划天数）
+        String? subtitle;
+        if (med.planGroupId != null) {
+          subtitle = '${med.schedule.daysCount ?? 1}天计划';
+        }
+        groups[key] = _MedicationGroup(
+          medications: [med],
+          subtitle: subtitle,
+        );
+      }
+    }
+
+    return groups.values.toList();
   }
 
   Future<void> _deleteMedication(String id) async {
@@ -212,6 +253,7 @@ class _MedicineBoxScreenState extends State<MedicineBoxScreen> {
 /// 药品列表项组件
 class _MedicationListTile extends StatelessWidget {
   final Medication medication;
+  final String? subtitle;
   final bool isInactive;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
@@ -219,6 +261,7 @@ class _MedicationListTile extends StatelessWidget {
 
   const _MedicationListTile({
     required this.medication,
+    this.subtitle,
     this.isInactive = false,
     this.onTap,
     this.onDelete,
@@ -286,7 +329,7 @@ class _MedicationListTile extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          medication.dosage,
+          subtitle ?? medication.dosage,
           style: TextStyle(
             color: theme.colorScheme.onSurfaceVariant,
           ),
