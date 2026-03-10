@@ -93,18 +93,22 @@ class _MedReminderAppState extends State<MedReminderApp> {
 
   /// 构建引导页面App
   Widget _buildOnboardingApp(BuildContext context, SettingsProvider settings) {
+    // 保存context引用
+    final onboardingContext = context;
+
     return MaterialApp(
       title: '服药宝',
       theme: WarmTheme.themeData,
       debugShowCheckedModeBanner: false,
-      home: Builder(
-        builder: (newContext) => Scaffold(
-          body: PrivacyPolicyPage(
-            onAgreed: () async {
-              await settings.agreePrivacy();
-              _showNotificationPermissionDialog(newContext);
-            },
-          ),
+      home: Scaffold(
+        body: PrivacyPolicyPage(
+          onAgreed: () async {
+            await settings.agreePrivacy();
+            // 使用Future.microtask确保在下一帧执行弹窗
+            Future.microtask(() {
+              _showNotificationPermissionDialog(onboardingContext);
+            });
+          },
         ),
       ),
     );
