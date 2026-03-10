@@ -12,13 +12,28 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   bool _notificationPermissionGranted = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkNotificationPermission();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 应用恢复时重新检查权限状态
+    if (state == AppLifecycleState.resumed) {
+      _checkNotificationPermission();
+    }
   }
 
   Future<void> _checkNotificationPermission() async {
@@ -160,29 +175,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: Text(_notificationPermissionGranted
                         ? '已开启'
                         : '未开启'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.refresh),
-                          onPressed: () async {
-                            final granted = await NotificationService().checkPermissions();
-                            if (context.mounted) {
-                              setState(() {
-                                _notificationPermissionGranted = granted;
-                              });
-                            }
-                          },
-                        ),
-                        Icon(
-                          _notificationPermissionGranted
-                              ? Icons.check_circle
-                              : Icons.warning,
-                          color: _notificationPermissionGranted
-                              ? Colors.green
-                              : Colors.orange,
-                        ),
-                      ],
+                    trailing: Icon(
+                      _notificationPermissionGranted
+                          ? Icons.check_circle
+                          : Icons.warning,
+                      color: _notificationPermissionGranted
+                          ? Colors.green
+                          : Colors.orange,
                     ),
                     onTap: () async {
                       final granted =
@@ -200,20 +199,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         );
                       }
-                    },
-                  ),
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-                  ListTile(
-                    title: const Text('系统设置'),
-                    subtitle: const Text('点击后查看如何在系统设置中开启权限'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('请前往手机系统设置 → 应用 → 服药宝 → 通知，开启通知权限'),
-                          duration: Duration(seconds: 4),
-                        ),
-                      );
                     },
                   ),
                 ],

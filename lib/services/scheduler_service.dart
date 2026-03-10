@@ -142,31 +142,27 @@ class SchedulerService {
       scheduledTime,
     );
 
-    // 异步发送通知，不阻塞主流程
-    Future.microtask(() async {
-      try {
-        await _notificationService.showMedicationReminder(
-          notificationId: notificationId,
-          medication: medication,
-          scheduledTime: scheduledTime,
-        );
-      } catch (e) {
-        // 通知失败不影响记录创建
-      }
-    });
+    // 发送通知
+    try {
+      await _notificationService.showMedicationReminder(
+        notificationId: notificationId,
+        medication: medication,
+        scheduledTime: scheduledTime,
+      );
+    } catch (e) {
+      // 通知失败不影响记录创建
+    }
 
-    // 异步发送语音提醒，不阻塞主流程
-    Future.microtask(() async {
-      try {
-        await _voiceService.speakMedicationReminder(
-          medicationName: medication.name,
-          dosage: medication.dosage,
-          isMedicine: medication.category == MedicationCategory.medicine,
-        );
-      } catch (e) {
-        // 语音失败不影响记录创建
-      }
-    });
+    // 发送语音提醒
+    try {
+      await _voiceService.speakMedicationReminder(
+        medicationName: medication.name,
+        dosage: medication.dosage,
+        isMedicine: medication.category == MedicationCategory.medicine,
+      );
+    } catch (e) {
+      // 语音失败不影响记录创建
+    }
   }
 
   /// 调度合并提醒
@@ -181,37 +177,33 @@ class SchedulerService {
       scheduledTime,
     );
 
-    // 异步发送合并通知，不阻塞主流程
-    Future.microtask(() async {
-      try {
-        await _notificationService.showMergedReminder(
-          notificationId: notificationId,
-          medications: medications,
-          scheduledTime: scheduledTime,
-        );
-      } catch (e) {
-        // 通知失败不影响记录创建
-      }
-    });
+    // 发送合并通知
+    try {
+      await _notificationService.showMergedReminder(
+        notificationId: notificationId,
+        medications: medications,
+        scheduledTime: scheduledTime,
+      );
+    } catch (e) {
+      // 通知失败不影响记录创建
+    }
 
-    // 异步发送合并语音提醒，不阻塞主流程
-    Future.microtask(() async {
-      try {
-        await _voiceService.speakMergedReminder(
-          medications: medications
-              .map((m) => {
-                    'name': m.name,
-                    'dosage': m.dosage,
-                    'isMedicine': m.category == MedicationCategory.medicine
-                        ? 'true'
-                        : 'false',
-                  })
-              .toList(),
-        );
-      } catch (e) {
-        // 语音失败不影响记录创建
-      }
-    });
+    // 发送合并语音提醒
+    try {
+      await _voiceService.speakMergedReminder(
+        medications: medications
+            .map((m) => {
+                  'name': m.name,
+                  'dosage': m.dosage,
+                  'isMedicine': m.category == MedicationCategory.medicine
+                      ? 'true'
+                      : 'false',
+                })
+            .toList(),
+      );
+    } catch (e) {
+      // 语音失败不影响记录创建
+    }
   }
 
   /// 创建待服记录
