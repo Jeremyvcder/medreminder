@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/notification_service.dart';
 import '../theme/warm_theme.dart';
 
 /// 设置页面
@@ -128,6 +129,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _showPrivacyPolicyDialog(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: WarmTheme.spaceLg),
+
+              // 通知权限
+              _buildSectionCard(
+                title: '应用权限',
+                children: [
+                  ListTile(
+                    title: const Text('通知权限'),
+                    subtitle: const Text('用于接收服药提醒通知'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () async {
+                      final granted = await NotificationService().requestPermissions();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(granted ? '通知权限已开启' : '通知权限未开启'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
