@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - 选择药品后自动隐藏输入法键盘
+- 停用/恢复/删除药品后首页自动刷新
+- 首页空状态时支持下拉刷新
 
 ## [1.2.0] - 2026-03-10
 
