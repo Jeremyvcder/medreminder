@@ -354,6 +354,21 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // 设置通知点击回调，点击通知后跳转到首页
+    NotificationService.onNotificationTap = _navigateToHome;
+  }
+
+  void _navigateToHome() {
+    if (mounted) {
+      setState(() {
+        _currentIndex = 0;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(

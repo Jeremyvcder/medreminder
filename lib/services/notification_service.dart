@@ -14,6 +14,9 @@ class NotificationService {
 
   bool _isInitialized = false;
 
+  /// 导航回调 - 用于通知点击后导航到首页
+  static void Function()? onNotificationTap;
+
   /// 初始化通知服务
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -70,7 +73,8 @@ class NotificationService {
     // 可以通过payload传递药品ID或合并提醒ID
     final payload = response.payload;
     if (payload != null) {
-      // TODO: 导航到相应页面
+      // 调用导航回调，跳转到首页
+      onNotificationTap?.call();
     }
   }
 
