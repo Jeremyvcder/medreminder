@@ -116,19 +116,52 @@ class MedicationProvider extends ChangeNotifier {
   }
 
   /// 停用药品
+  /// 如果是多天计划（planGroupId不为空），则停用整个计划组
   Future<bool> deactivateMedication(String id) async {
     try {
       final medications = await _db.getMedications();
       final medMap = medications.firstWhere((m) => m['id'] == id);
       final medication = Medication.fromMap(medMap);
 
-      final updated = medication.copyWith(
-        isActive: false,
-        stoppedAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+      // 检查是否是的多天计划
+      final isMultiDay = medication.planGroupId != null;
+      List<Medication> medsToDeactivate = [medication];
 
-      await _db.updateMedication(id, updated.toMap());
+      if (isMultiDay) {
+        // 多天计划，停用整个计划组
+        medsToDeactivate = medications
+            .where((m) => m['plan_group_id'] == medication.planGroupId)
+            .map((m) => Medication.fromMap(m))
+            .toList();
+      }
+
+      // 创建SchedulerService实例并取消每个药品的未来通知
+      final schedulerService = SchedulerService();
+      for (var med in medsToDeactivate) {
+        await schedulerService.cancelMedicationReminders(med.id);
+      }
+
+      // 更新每个药品的停用历史
+      final now = DateTime.now();
+      for (var med in medsToDeactivate) {
+        // 获取当前历史记录
+        final history = med.stoppedHistory ?? [];
+
+        // 添加新的停用记录
+        final newHistory = [
+          ...history,
+          StoppedHistoryItem(time: now, action: 'deactivate'),
+        ];
+
+        final updated = med.copyWith(
+          isActive: false,
+          stoppedHistory: newHistory,
+          updatedAt: now,
+        );
+
+        await _db.updateMedication(med.id, updated.toMap());
+      }
+
       await loadMedications();
       return true;
     } catch (e) {
@@ -139,19 +172,52 @@ class MedicationProvider extends ChangeNotifier {
   }
 
   /// 恢复药品
+  /// 如果是多天计划（planGroupId不为空），则恢复整个计划组
   Future<bool> reactivateMedication(String id) async {
     try {
       final medications = await _db.getMedications();
       final medMap = medications.firstWhere((m) => m['id'] == id);
       final medication = Medication.fromMap(medMap);
 
-      final updated = medication.copyWith(
-        isActive: true,
-        stoppedAt: null,
-        updatedAt: DateTime.now(),
-      );
+      // 检查是否是的多天计划
+      final isMultiDay = medication.planGroupId != null;
+      List<Medication> medsToReactivate = [medication];
 
-      await _db.updateMedication(id, updated.toMap());
+      if (isMultiDay) {
+        // 多天计划，恢复整个计划组
+        medsToReactivate = medications
+            .where((m) => m['plan_group_id'] == medication.planGroupId)
+            .map((m) => Medication.fromMap(m))
+            .toList();
+      }
+
+      // 创建SchedulerService实例
+      final schedulerService = SchedulerService();
+
+      // 更新每个药品的恢复历史
+      final now = DateTime.now();
+      for (var med in medsToReactivate) {
+        // 获取当前历史记录
+        final history = med.stoppedHistory ?? [];
+
+        // 添加新的恢复记录
+        final newHistory = [
+          ...history,
+          StoppedHistoryItem(time: now, action: 'reactivate'),
+        ];
+
+        final updated = med.copyWith(
+          isActive: true,
+          stoppedHistory: newHistory,
+          updatedAt: now,
+        );
+
+        await _db.updateMedication(med.id, updated.toMap());
+
+        // 恢复后重新调度提醒（当天触发逻辑在SchedulerService中处理）
+        await schedulerService.scheduleReminderForMedication(med.id);
+      }
+
       await loadMedications();
       return true;
     } catch (e) {

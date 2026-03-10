@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/medication.dart';
 import '../providers/medication_provider.dart';
+import '../providers/reminder_provider.dart';
 import 'add_medication_screen.dart';
 
 /// 药品详情页面
@@ -139,12 +140,12 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
                   ),
 
                   // 停用日期
-                  if (medication.stoppedAt != null) ...[
+                  if (medication.lastStoppedAt != null) ...[
                     const SizedBox(height: 8),
                     _InfoRow(
                       icon: Icons.calendar_today,
                       label: '停用日期',
-                      value: _formatDate(medication.stoppedAt!),
+                      value: _formatDate(medication.lastStoppedAt!),
                     ),
                   ],
                 ],
@@ -204,13 +205,21 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
   }
 
   Future<void> _deactivateMedication() async {
+    // 检查是否是的多天计划
+    final isMultiDay = _medication?.planGroupId != null;
+
+    String contentText;
+    if (isMultiDay) {
+      contentText = '这是多天用药计划，停用将同时停用所有相关药品。停用后将不再提醒，但历史记录会保留。您可在药箱底部的"已停用项目"中恢复。是否确认停用？';
+    } else {
+      contentText = '停用后将不再提醒，但历史记录会保留。您可在药箱底部的"已停用项目"中恢复。是否确认停用？';
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认停用'),
-        content: const Text(
-          '停用后将不再提醒，但历史记录会保留。您可在药箱底部的"已停用项目"中恢复。是否确认停用？',
-        ),
+        content: Text(contentText),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -225,21 +234,35 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await context
-          .read<MedicationProvider>()
-          .deactivateMedication(widget.medicationId);
-      _loadMedication();
+      final medicationProvider = context.read<MedicationProvider>();
+      final reminderProvider = context.read<ReminderProvider>();
+      await medicationProvider.deactivateMedication(widget.medicationId);
+      // 刷新数据后再获取最新状态
+      await medicationProvider.loadMedications();
+      // 刷新首页提醒
+      await reminderProvider.loadTodayReminders();
+      await reminderProvider.loadCompletedReminders();
+      _medication = medicationProvider.getMedicationById(widget.medicationId);
+      if (mounted) setState(() {});
     }
   }
 
   Future<void> _reactivateMedication() async {
+    // 检查是否是的多天计划
+    final isMultiDay = _medication?.planGroupId != null;
+
+    String contentText;
+    if (isMultiDay) {
+      contentText = '这是多天用药计划，恢复将同时恢复所有相关药品。恢复后将重新开始提醒。是否确认恢复？';
+    } else {
+      contentText = '恢复后将重新开始提醒。是否确认恢复？';
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认恢复'),
-        content: const Text(
-          '恢复后将重新开始提醒。是否确认恢复？',
-        ),
+        content: Text(contentText),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -254,10 +277,16 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await context
-          .read<MedicationProvider>()
-          .reactivateMedication(widget.medicationId);
-      _loadMedication();
+      final medicationProvider = context.read<MedicationProvider>();
+      final reminderProvider = context.read<ReminderProvider>();
+      await medicationProvider.reactivateMedication(widget.medicationId);
+      // 刷新数据后再获取最新状态
+      await medicationProvider.loadMedications();
+      // 刷新首页提醒
+      await reminderProvider.loadTodayReminders();
+      await reminderProvider.loadCompletedReminders();
+      _medication = medicationProvider.getMedicationById(widget.medicationId);
+      if (mounted) setState(() {});
     }
   }
 
@@ -284,9 +313,12 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await context
-          .read<MedicationProvider>()
-          .deleteMedication(widget.medicationId);
+      final medicationProvider = context.read<MedicationProvider>();
+      final reminderProvider = context.read<ReminderProvider>();
+      await medicationProvider.deleteMedication(widget.medicationId);
+      // 刷新首页提醒
+      await reminderProvider.loadTodayReminders();
+      await reminderProvider.loadCompletedReminders();
       Navigator.of(context).pop();
     }
   }

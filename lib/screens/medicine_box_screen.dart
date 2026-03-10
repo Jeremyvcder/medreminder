@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/medication.dart';
 import '../providers/medication_provider.dart';
+import '../providers/reminder_provider.dart';
 import 'add_medication_screen.dart';
 import 'medication_detail_screen.dart';
 
@@ -236,12 +237,24 @@ class _MedicineBoxScreenState extends State<MedicineBoxScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await context.read<MedicationProvider>().deleteMedication(id);
+      final medicationProvider = context.read<MedicationProvider>();
+      final reminderProvider = context.read<ReminderProvider>();
+      await medicationProvider.deleteMedication(id);
+      // 刷新首页提醒
+      await reminderProvider.loadTodayReminders();
+      await reminderProvider.loadCompletedReminders();
     }
   }
 
   Future<void> _restoreMedication(String id) async {
-    await context.read<MedicationProvider>().reactivateMedication(id);
+    final medicationProvider = context.read<MedicationProvider>();
+    final reminderProvider = context.read<ReminderProvider>();
+    await medicationProvider.reactivateMedication(id);
+    // 刷新数据以确保UI更新
+    await medicationProvider.loadMedications();
+    // 刷新首页提醒
+    await reminderProvider.loadTodayReminders();
+    await reminderProvider.loadCompletedReminders();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('已恢复')),

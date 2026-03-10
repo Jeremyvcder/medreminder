@@ -11,7 +11,7 @@ class DatabaseHelper {
   DatabaseHelper._internal();
 
   static const String _dbName = 'medreminder.db';
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 3;
   static const String _keyName = 'db_encryption_key';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(
@@ -58,7 +58,7 @@ class DatabaseHelper {
         usage TEXT,
         schedule TEXT NOT NULL,
         is_active INTEGER NOT NULL DEFAULT 1,
-        stopped_at TEXT,
+        stopped_history TEXT,
         plan_group_id TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
@@ -135,6 +135,30 @@ class DatabaseHelper {
           created_at TEXT NOT NULL
         )
       ''');
+    }
+
+    // 版本2 -> 版本3：将 stopped_at 迁移到 stopped_history
+    if (oldVersion < 3) {
+      // 添加 stopped_history 字段
+      await db.execute('''
+        ALTER TABLE medications ADD COLUMN stopped_history TEXT
+      ''');
+
+      // 将现有的 stopped_at 数据迁移到 stopped_history
+      final medications = await db.query('medications', where: 'stopped_at IS NOT NULL');
+      for (var med in medications) {
+        final stoppedAt = med['stopped_at'] as String?;
+        if (stoppedAt != null && stoppedAt.isNotEmpty) {
+          // 将单个时间转换为 JSON 数组格式
+          final historyJson = '[{"time":"$stoppedAt","action":"deactivate"}]';
+          await db.update(
+            'medications',
+            {'stopped_history': historyJson},
+            where: 'id = ?',
+            whereArgs: [med['id']],
+          );
+        }
+      }
     }
   }
 

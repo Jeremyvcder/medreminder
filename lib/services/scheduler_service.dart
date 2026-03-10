@@ -410,6 +410,9 @@ class SchedulerService {
         );
         if (medication.isEmpty) continue; // 跳过找不到的药品
 
+        // 过滤已停用的药品
+        if (medication['is_active'] != 1) continue;
+
         result.add({
           'record': record,
           'medication': medication,
@@ -481,5 +484,85 @@ class SchedulerService {
     });
 
     return result;
+  }
+
+  /// 取消特定药品的所有未来提醒
+  Future<void> cancelMedicationReminders(String medicationId) async {
+    final medications = await _db.getMedications(isActive: true);
+    final medMap = medications.where((m) => m['id'] == medicationId).toList();
+
+    if (medMap.isEmpty) return;
+
+    final medication = Medication.fromMap(medMap.first);
+    final scheduledTimes = medication.schedule.getTodayScheduledTimes();
+    final now = DateTime.now();
+
+    // 取消今天和明天的提醒
+    for (var time in scheduledTimes) {
+      if (time.isAfter(now)) {
+        final notificationId = NotificationService.generateNotificationId(
+          medicationId,
+          time,
+        );
+        await _notificationService.cancelNotification(notificationId);
+      }
+    }
+
+    // 对于多天计划，也取消明天的提醒
+    if (medication.schedule.type == ScheduleType.multiday) {
+      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+      for (var time in scheduledTimes) {
+        final tomorrowTime = DateTime(
+          tomorrow.year,
+          tomorrow.month,
+          tomorrow.day,
+          time.hour,
+          time.minute,
+        );
+        if (tomorrowTime.isAfter(now)) {
+          final notificationId = NotificationService.generateNotificationId(
+            medicationId,
+            tomorrowTime,
+          );
+          await _notificationService.cancelNotification(notificationId);
+        }
+      }
+    }
+  }
+
+  /// 为特定药品调度提醒
+  /// 用于恢复药品后重新调度提醒
+  /// 包含当天触发逻辑：如果有任一提醒时间未过，则当天触发
+  Future<void> scheduleReminderForMedication(String medicationId) async {
+    final medications = await _db.getMedications(isActive: true);
+    final medMap = medications.where((m) => m['id'] == medicationId).toList();
+
+    if (medMap.isEmpty) return;
+
+    final medication = Medication.fromMap(medMap.first);
+    final now = DateTime.now();
+
+    // 获取该药品今天的提醒时间
+    final scheduledTimes = medication.schedule.getTodayScheduledTimes();
+
+    // 检查是否有未来的提醒时间（未过的时间）
+    final futureTimes = scheduledTimes.where((t) => t.isAfter(now)).toList();
+
+    if (futureTimes.isNotEmpty) {
+      // 有未来时间，今天正常触发 - 为每个未来时间发送通知
+      for (var time in futureTimes) {
+        final notificationId = NotificationService.generateNotificationId(
+          medication.id,
+          time,
+        );
+
+        await _notificationService.showMedicationReminder(
+          notificationId: notificationId,
+          medication: medication,
+          scheduledTime: time,
+        );
+      }
+    }
+    // 如果没有未来时间，则当天不触发，从次日开始正常调度
   }
 }

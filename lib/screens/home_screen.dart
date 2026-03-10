@@ -125,8 +125,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   final mergedReminders = provider.mergedReminders;
 
                   if (pendingItems.isEmpty && completedItems.isEmpty) {
-                    return _EmptyState(
-                      onAddPressed: () => _navigateToAdd(),
+                    return RefreshIndicator(
+                      onRefresh: _loadData,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: _EmptyState(
+                            onAddPressed: () => _navigateToAdd(),
+                          ),
+                        ),
+                      ),
                     );
                   }
 

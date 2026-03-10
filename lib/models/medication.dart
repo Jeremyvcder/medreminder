@@ -6,6 +6,31 @@ enum MedicationCategory {
   supplement, // 保健品
 }
 
+/// 停用/恢复历史记录项
+class StoppedHistoryItem {
+  final DateTime time;
+  final String action; // 'deactivate' 或 'reactivate'
+
+  const StoppedHistoryItem({
+    required this.time,
+    required this.action,
+  });
+
+  factory StoppedHistoryItem.fromJson(Map<String, dynamic> json) {
+    return StoppedHistoryItem(
+      time: DateTime.parse(json['time'] as String),
+      action: json['action'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'time': time.toIso8601String(),
+      'action': action,
+    };
+  }
+}
+
 /// 药品数据模型
 class Medication {
   final String id;
@@ -15,7 +40,7 @@ class Medication {
   final String? usage;
   final Schedule schedule;
   final bool isActive;
-  final DateTime? stoppedAt;
+  final List<StoppedHistoryItem>? stoppedHistory; // 停用/恢复历史记录
   final String? planGroupId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -28,7 +53,7 @@ class Medication {
     this.usage,
     required this.schedule,
     required this.isActive,
-    this.stoppedAt,
+    this.stoppedHistory,
     this.planGroupId,
     required this.createdAt,
     required this.updatedAt,
@@ -36,6 +61,16 @@ class Medication {
 
   /// 从数据库Map创建Medication对象
   factory Medication.fromMap(Map<String, dynamic> map) {
+    // 解析 stopped_history 字段
+    List<StoppedHistoryItem>? history;
+    if (map['stopped_history'] != null) {
+      final historyJson = map['stopped_history'] as String;
+      if (historyJson.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(historyJson);
+        history = list.map((e) => StoppedHistoryItem.fromJson(e)).toList();
+      }
+    }
+
     return Medication(
       id: map['id'] as String,
       name: map['name'] as String,
@@ -46,9 +81,7 @@ class Medication {
       usage: map['usage'] as String?,
       schedule: Schedule.fromJson(map['schedule'] as String),
       isActive: map['is_active'] == 1,
-      stoppedAt: map['stopped_at'] != null
-          ? DateTime.parse(map['stopped_at'] as String)
-          : null,
+      stoppedHistory: history,
       planGroupId: map['plan_group_id'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
@@ -57,6 +90,12 @@ class Medication {
 
   /// 转换为数据库Map
   Map<String, dynamic> toMap() {
+    // 将 stoppedHistory 转换为 JSON 字符串
+    String? historyJson;
+    if (stoppedHistory != null && stoppedHistory!.isNotEmpty) {
+      historyJson = jsonEncode(stoppedHistory!.map((e) => e.toJson()).toList());
+    }
+
     return {
       'id': id,
       'name': name,
@@ -67,7 +106,7 @@ class Medication {
       'usage': usage,
       'schedule': schedule.toJson(),
       'is_active': isActive ? 1 : 0,
-      'stopped_at': stoppedAt?.toIso8601String(),
+      'stopped_history': historyJson,
       'plan_group_id': planGroupId,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
@@ -83,7 +122,7 @@ class Medication {
     String? usage,
     Schedule? schedule,
     bool? isActive,
-    DateTime? stoppedAt,
+    List<StoppedHistoryItem>? stoppedHistory,
     String? planGroupId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -96,11 +135,23 @@ class Medication {
       usage: usage ?? this.usage,
       schedule: schedule ?? this.schedule,
       isActive: isActive ?? this.isActive,
-      stoppedAt: stoppedAt ?? this.stoppedAt,
+      stoppedHistory: stoppedHistory ?? this.stoppedHistory,
       planGroupId: planGroupId ?? this.planGroupId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  /// 获取最近的停用时间（用于显示）
+  DateTime? get lastStoppedAt {
+    if (stoppedHistory == null || stoppedHistory!.isEmpty) return null;
+    // 找到最后一个停用记录（action = 'deactivate'）
+    for (var i = stoppedHistory!.length - 1; i >= 0; i--) {
+      if (stoppedHistory![i].action == 'deactivate') {
+        return stoppedHistory![i].time;
+      }
+    }
+    return null;
   }
 }
 

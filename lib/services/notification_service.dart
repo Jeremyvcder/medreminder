@@ -208,6 +208,15 @@ class NotificationService {
     await _notifications.cancel(notificationId);
   }
 
+  /// 取消特定药品的所有通知
+  /// 由于通知ID是基于药品ID和时间生成的，我们无法直接获取所有通知ID
+  /// 这里提供一个占位方法，实际使用中通过数据库查询已调度的提醒来取消
+  Future<void> cancelByMedicationId(String medicationId) async {
+    // 注意：由于flutter_local_notifications的限制，无法直接根据药品ID取消通知
+    // 实际的取消逻辑需要在SchedulerService中实现，遍历该药品的所有提醒时间并取消
+    // 这里留空，由调用者负责取消具体通知
+  }
+
   /// 取消所有通知
   Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
