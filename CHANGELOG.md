@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - 通知点击后无导航问题
+- 编辑药品提醒时间后详情页不更新问题
+- 编辑药品后首页出现重复记录问题
 
 ### Added (阶段8: 欢迎页面)
 - 欢迎页面（Splash Screen）：绿色渐变背景 + 医疗图标 + 标语
