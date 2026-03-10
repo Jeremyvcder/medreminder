@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (阶段9: 测试与Bug修复)
+- 通知点击导航：点击服药提醒通知后自动跳转到首页
+- 单元测试：添加Medication和Record模型的单元测试
+- 代码分析：flutter analyze无警告无错误
+
+### Fixed
+- 通知点击后无导航问题
+
 ### Added (阶段8: 欢迎页面)
 - 欢迎页面（Splash Screen）：绿色渐变背景 + 医疗图标 + 标语
 - 标语内容："服药宝，守护您的用药健康"
