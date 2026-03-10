@@ -97,14 +97,14 @@ class _MedReminderAppState extends State<MedReminderApp> {
       title: '服药宝',
       theme: WarmTheme.themeData,
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: PrivacyPolicyPage(
-          onAgreed: () async {
-            await settings.agreePrivacy();
-            if (context.mounted) {
-              _showNotificationPermissionDialog(context);
-            }
-          },
+      home: Builder(
+        builder: (newContext) => Scaffold(
+          body: PrivacyPolicyPage(
+            onAgreed: () async {
+              await settings.agreePrivacy();
+              _showNotificationPermissionDialog(newContext);
+            },
+          ),
         ),
       ),
     );
