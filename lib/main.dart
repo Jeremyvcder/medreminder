@@ -7,9 +7,12 @@ import 'providers/medication_provider.dart';
 import 'providers/reminder_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/template_provider.dart';
+import 'providers/records_provider.dart';
 import 'services/scheduler_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/medicine_box_screen.dart';
+import 'screens/records_screen.dart';
+import 'screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,13 +40,23 @@ class MedReminderApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReminderProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()..loadSettings()),
         ChangeNotifierProvider(create: (_) => TemplateProvider()..loadTemplates()),
+        ChangeNotifierProvider(create: (_) => RecordsProvider()),
       ],
-      child: MaterialApp(
-        title: '服药宝',
-        // 使用温暖舒适主题
-        theme: WarmTheme.themeData,
-        debugShowCheckedModeBanner: false,
-        home: const MainScreen(),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: TextScaler.linear(settings.textScaleFactor),
+            ),
+            child: MaterialApp(
+              title: '服药宝',
+              // 使用温暖舒适主题
+              theme: WarmTheme.themeData,
+              debugShowCheckedModeBanner: false,
+              home: const MainScreen(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -62,8 +75,8 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     MedicineBoxScreen(),
-    PlaceholderScreen(title: '记录'),
-    PlaceholderScreen(title: '设置'),
+    RecordsScreen(),
+    const SettingsScreen(),
   ];
 
   @override
@@ -102,42 +115,6 @@ class _MainScreenState extends State<MainScreen> {
             label: '设置',
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// 占位页面
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-
-  const PlaceholderScreen({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              title == '记录' ? Icons.calendar_month : Icons.settings,
-              size: 80,
-              color: theme.colorScheme.outlineVariant,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '$title 开发中',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

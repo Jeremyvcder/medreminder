@@ -106,9 +106,9 @@ class DatabaseHelper {
   Future<void> _initDefaultSettings(Database db) async {
     final now = DateTime.now().toIso8601String();
     final defaultSettings = {
-      'voice_enabled': 'true',
-      'voice_medicine_enabled': 'true',
-      'voice_supplement_enabled': 'true',
+      'voice_enabled': 'false',
+      'voice_medicine_enabled': 'false',
+      'voice_supplement_enabled': 'false',
       'large_text_mode': 'false',
       'has_agreed_privacy': 'false',
       'device_uuid': const Uuid().v4(),

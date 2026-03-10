@@ -7,9 +7,9 @@ class SettingsProvider extends ChangeNotifier {
   final DatabaseHelper _db = DatabaseHelper();
   final VoiceService _voiceService = VoiceService();
 
-  bool _voiceEnabled = true;
-  bool _medicineVoiceEnabled = true;
-  bool _supplementVoiceEnabled = true;
+  bool _voiceEnabled = false;
+  bool _medicineVoiceEnabled = false;
+  bool _supplementVoiceEnabled = false;
   bool _largeTextMode = false;
   bool _hasAgreedPrivacy = false;
   String? _deviceUuid;
