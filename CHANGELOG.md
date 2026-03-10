@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-10
+
 ### Fixed
-- 首页不显示提醒的问题：将 `_createPendingRecord` 移到通知发送之前，确保通知权限异常时记录仍能创建
-- 保存药品无反应的问题：修复 medicine_box_screen.dart 和 medication_provider.dart 在 build 期间调用 setState 的问题
-- 优化添加药品后的数据刷新逻辑，先刷新数据再返回首页
+- 首页不显示提醒的问题：修复已过去时间点不创建记录的问题，现在添加稍晚的提醒也能正常显示
+- 添加稍晚提醒后不自动返回的问题：优化通知和语音发送为异步执行
+- 多天计划无法保存的问题：修复 Schedule.toJson 中 daysCount 的 key 名称错误（days -> daysCount）
+- 添加药品页面的 try-catch-finally 异常处理
 
 ### Added
-- 添加药品页面：提醒时间支持点击直接编辑
+- 批量添加药品优化：多天计划使用统一提醒生成，提高性能
 
 ## [1.1.0] - 2026-03-07
 
