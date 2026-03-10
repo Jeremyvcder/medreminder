@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/medication_provider.dart';
 import '../providers/reminder_provider.dart';
+import '../providers/records_provider.dart';
 import '../widgets/medication_card.dart';
 import '../widgets/merged_reminder_card.dart';
 import '../widgets/completed_section.dart';
@@ -235,6 +236,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _confirmMedication(String recordId) async {
     final provider = context.read<ReminderProvider>();
     await provider.confirmMedication(recordId);
+    // 刷新记录模块数据，确保日历和统计同步更新
+    if (mounted) {
+      context.read<RecordsProvider>().refresh();
+    }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('已确认服药')),
@@ -245,6 +250,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _confirmMultipleMedications(List<String> recordIds) async {
     final provider = context.read<ReminderProvider>();
     await provider.confirmMultipleMedications(recordIds);
+    // 刷新记录模块数据，确保日历和统计同步更新
+    if (mounted) {
+      context.read<RecordsProvider>().refresh();
+    }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('已确认${recordIds.length}项服药')),
@@ -255,6 +264,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _skipMedication(String recordId) async {
     final provider = context.read<ReminderProvider>();
     await provider.skipMedication(recordId);
+    // 刷新记录模块数据，确保日历和统计同步更新
+    if (mounted) {
+      context.read<RecordsProvider>().refresh();
+    }
   }
 
   Future<void> _snoozeReminder(String recordId) async {
