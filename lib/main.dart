@@ -6,6 +6,7 @@ import 'db/database_helper.dart';
 import 'providers/medication_provider.dart';
 import 'providers/reminder_provider.dart';
 import 'providers/settings_provider.dart';
+import 'providers/template_provider.dart';
 import 'services/scheduler_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/medicine_box_screen.dart';
@@ -35,6 +36,7 @@ class MedReminderApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => MedicationProvider()),
         ChangeNotifierProvider(create: (_) => ReminderProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()..loadSettings()),
+        ChangeNotifierProvider(create: (_) => TemplateProvider()..loadTemplates()),
       ],
       child: MaterialApp(
         title: '服药宝',

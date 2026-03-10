@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (阶段4: 多天计划功能)
+- 逐天剂量设置：支持每天不同剂量（统一剂量/逐天设置切换）
+- 模板管理功能：保存和复用多天计划配置
+- 新增模板表数据库和CRUD操作
+- 新增TemplateProvider状态管理
+
 ### Fixed
 - 选择药品后自动隐藏输入法键盘
 

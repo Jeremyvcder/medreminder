@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../models/medication.dart';
 import '../providers/medication_provider.dart';
 import '../providers/reminder_provider.dart';
+import '../providers/template_provider.dart';
 import '../data/medication_library.dart';
+import 'daily_dose_screen.dart';
 
 /// 添加药品页面
 class AddMedicationScreen extends StatefulWidget {
@@ -27,6 +29,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   bool _isMultiDay = false;
   int _multiDayDays = 3;
   DateTime _startDate = DateTime.now();
+  bool _useUniformDosage = true; // 统一剂量 vs 逐天设置
+  List<String> _dailyDosages = []; // 逐天剂量列表
 
   List<MedicationInfo> _searchResults = [];
   bool _isSearching = false;
@@ -87,6 +91,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   }
 
   Future<void> _addReminderTime() async {
+    // 先关闭输入法键盘
+    FocusScope.of(context).unfocus();
     final time = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 12, minute: 0),
@@ -95,6 +101,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       setState(() {
         _reminderTimes.add(time);
       });
+      // 使用延迟确保在 picker 关闭后焦点被正确移除
+      await Future.delayed(Duration.zero);
+      FocusScope.of(context).unfocus();
     }
   }
 
@@ -108,6 +117,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   /// 编辑提醒时间
   Future<void> _editReminderTime(int index) async {
+    // 先关闭输入法键盘
+    FocusScope.of(context).unfocus();
     final time = await showTimePicker(
       context: context,
       initialTime: _reminderTimes[index],
@@ -116,6 +127,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       setState(() {
         _reminderTimes[index] = time;
       });
+      // 使用延迟确保在 picker 关闭后焦点被正确移除
+      await Future.delayed(Duration.zero);
+      FocusScope.of(context).unfocus();
     }
   }
 
@@ -130,6 +144,125 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       setState(() {
         _startDate = date;
       });
+      // 关闭输入法键盘
+      FocusScope.of(context).unfocus();
+    }
+  }
+
+  /// 打开逐天剂量设置页面
+  Future<void> _openDailyDoseScreen() async {
+    final result = await Navigator.of(context).push<List<String>>(
+      MaterialPageRoute(
+        builder: (context) => DailyDoseScreen(
+          daysCount: _multiDayDays,
+          defaultDosage: _dosageController.text.isNotEmpty ? _dosageController.text : '1片',
+          initialDosages: _dailyDosages,
+        ),
+      ),
+    );
+    if (result != null) {
+      setState(() {
+        _dailyDosages = result;
+      });
+    }
+  }
+
+  /// 打开模板选择弹窗
+  Future<void> _showTemplateDialog() async {
+    final templateProvider = context.read<TemplateProvider>();
+    await templateProvider.loadTemplates();
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Consumer<TemplateProvider>(
+        builder: (context, provider, child) {
+          // 加载中显示加载指示器
+          if (provider.isLoading) {
+            return const SizedBox(
+              height: 200,
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (provider.templates.isEmpty) {
+            return const SizedBox(
+              height: 200,
+              child: Center(child: Text('暂无模板')),
+            );
+          }
+          return ListView.builder(
+            shrinkWrap: true,
+            itemCount: provider.templates.length,
+            itemBuilder: (context, index) {
+              final template = provider.templates[index];
+              return ListTile(
+                title: Text(template.name),
+                subtitle: Text('${template.daysCount}天'),
+                onTap: () {
+                  setState(() {
+                    _isMultiDay = true;
+                    _multiDayDays = template.daysCount;
+                    _dailyDosages = List.from(template.dosages);
+                    _useUniformDosage = false;
+                  });
+                  Navigator.of(context).pop();
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  /// 保存当前设置为模板
+  Future<void> _saveAsTemplate() async {
+    final nameController = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('保存为模板'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: '模板名称',
+            hintText: '如：我的28天计划',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(nameController.text),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && mounted) {
+      final templateProvider = context.read<TemplateProvider>();
+      final template = await templateProvider.addTemplate(
+        name: result,
+        daysCount: _multiDayDays,
+        dosages: _useUniformDosage
+            ? List.generate(_multiDayDays, (_) => _dosageController.text)
+            : _dailyDosages,
+      );
+      if (mounted) {
+        if (template != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('模板保存成功')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(templateProvider.error ?? '模板保存失败')),
+          );
+        }
+      }
     }
   }
 
@@ -155,6 +288,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         await provider.updateMedication(updated);
       } else if (_isMultiDay) {
         // 创建多天计划
+        final dosages = _useUniformDosage || _dailyDosages.isEmpty
+            ? List.generate(_multiDayDays, (_) => _dosageController.text)
+            : _dailyDosages;
         await provider.createMultiDayPlan(
           name: _nameController.text,
           category: _category,
@@ -163,6 +299,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           startDate: _startDate,
           daysCount: _multiDayDays,
           times: times,
+          dosages: dosages,
         );
       } else {
       // 创建普通提醒
@@ -368,17 +505,78 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     IconButton(
                       icon: const Icon(Icons.remove),
                       onPressed: _multiDayDays > 1
-                          ? () => setState(() => _multiDayDays--)
+                          ? () => setState(() {
+                              _multiDayDays--;
+                              // 清除逐天剂量，保持一致
+                              _dailyDosages.clear();
+                            })
                           : null,
                     ),
                     IconButton(
                       icon: const Icon(Icons.add),
                       onPressed: _multiDayDays < 7
-                          ? () => setState(() => _multiDayDays++)
+                          ? () => setState(() {
+                              _multiDayDays++;
+                              _dailyDosages.clear();
+                            })
                           : null,
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 8),
+              // 剂量模式选择
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(
+                    value: true,
+                    label: Text('统一剂量'),
+                  ),
+                  ButtonSegment(
+                    value: false,
+                    label: Text('逐天设置'),
+                  ),
+                ],
+                selected: {_useUniformDosage},
+                onSelectionChanged: (selection) {
+                  setState(() {
+                    _useUniformDosage = selection.first;
+                  });
+                },
+              ),
+              const SizedBox(height: 8),
+              // 逐天剂量设置按钮
+              if (!_useUniformDosage)
+                ListTile(
+                  title: const Text('每日剂量'),
+                  subtitle: Text(
+                    _dailyDosages.isEmpty
+                        ? '点击设置每天的剂量'
+                        : _dailyDosages.join('、'),
+                  ),
+                  trailing: const Icon(Icons.edit),
+                  onTap: _openDailyDoseScreen,
+                ),
+              const SizedBox(height: 8),
+              // 模板按钮
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _showTemplateDialog,
+                      icon: const Icon(Icons.folder_open),
+                      label: const Text('使用模板'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _saveAsTemplate,
+                      icon: const Icon(Icons.save),
+                      label: const Text('保存模板'),
+                    ),
+                  ),
+                ],
               ),
             ],
             const SizedBox(height: 16),

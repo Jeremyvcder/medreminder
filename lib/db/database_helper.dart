@@ -11,7 +11,7 @@ class DatabaseHelper {
   DatabaseHelper._internal();
 
   static const String _dbName = 'medreminder.db';
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
   static const String _keyName = 'db_encryption_key';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(
@@ -88,6 +88,17 @@ class DatabaseHelper {
       )
     ''');
 
+    // 模板表
+    await db.execute('''
+      CREATE TABLE templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        days_count INTEGER NOT NULL,
+        dosages TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
     // 初始化默认设置
     await _initDefaultSettings(db);
   }
@@ -113,7 +124,18 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // 未来版本升级时执行
+    // 版本1 -> 版本2：添加模板表
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS templates (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          days_count INTEGER NOT NULL,
+          dosages TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      ''');
+    }
   }
 
   // Medication CRUD
@@ -177,6 +199,16 @@ class DatabaseHelper {
       'medications',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  /// 根据 planGroupId 批量删除药品（用于多天计划）
+  Future<int> deleteMedicationsByPlanGroupId(String planGroupId) async {
+    final db = await database;
+    return await db.delete(
+      'medications',
+      where: 'plan_group_id = ?',
+      whereArgs: [planGroupId],
     );
   }
 
@@ -299,6 +331,39 @@ class DatabaseHelper {
       stats['total'] = (stats['total'] ?? 0) + count;
     }
     return stats;
+  }
+
+  // Template CRUD
+  Future<int> insertTemplate(Map<String, dynamic> template) async {
+    final db = await database;
+    return await db.insert('templates', template);
+  }
+
+  Future<List<Map<String, dynamic>>> getTemplates() async {
+    final db = await database;
+    return await db.query(
+      'templates',
+      orderBy: 'created_at DESC',
+    );
+  }
+
+  Future<Map<String, dynamic>?> getTemplateById(String id) async {
+    final db = await database;
+    final results = await db.query(
+      'templates',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<int> deleteTemplate(String id) async {
+    final db = await database;
+    return await db.delete(
+      'templates',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<void> close() async {
