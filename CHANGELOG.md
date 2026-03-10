@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- 选择药品后自动隐藏输入法键盘
+
 ## [1.2.0] - 2026-03-10
 
 ### Fixed
