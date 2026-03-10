@@ -565,6 +565,12 @@ v3.0扩展至家庭关怀场景，满足子女关心长辈用药的需求：
 
 Android	AlarmManager（setExactAndAllowWhileIdle）+ BOOT\_COMPLETED广播恢复 + **自启动权限（为保证华为/小米等国内厂商的兼容性，需申请自启动权限）**
 
+> Android权限声明（AndroidManifest.xml）：
+> - POST_NOTIFICATIONS：Android 13+通知权限
+> - SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM：精确闹钟权限
+> - WAKE_LOCK：唤醒锁，保持CPU运行以发送通知
+> - RECEIVE_BOOT_COMPLETED：重启后恢复提醒
+
 iOS	UNUserNotificationCenter + 本地通知
 
 跨平台	优先使用成熟插件（如react-native-push-notification），评估后决定是否需要原生桥接
