@@ -269,9 +269,10 @@ class NotificationService {
   }
 
   /// 跳转到系统应用通知设置页面
-  Future<void> openNotificationSettings() async {
-    // 由于flutter_local_notifications不提供跳转设置的方法
-    // 暂不实现，用户可以在手机系统设置中手动关闭
+  /// 由于没有合适的跨平台包，这里返回false让用户手动去系统设置
+  Future<bool> openNotificationSettings() async {
+    // 返回false表示无法自动打开，需要用户手动设置
+    return false;
   }
 
   /// 生成通知ID（基于药品ID和时间戳）

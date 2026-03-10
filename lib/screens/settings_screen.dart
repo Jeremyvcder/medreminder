@@ -159,14 +159,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: const Text('通知权限'),
                     subtitle: Text(_notificationPermissionGranted
                         ? '已开启'
-                        : '未开启 - 点击开启'),
-                    trailing: Icon(
-                      _notificationPermissionGranted
-                          ? Icons.check_circle
-                          : Icons.warning,
-                      color: _notificationPermissionGranted
-                          ? Colors.green
-                          : Colors.orange,
+                        : '未开启'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: () async {
+                            final granted = await NotificationService().checkPermissions();
+                            if (context.mounted) {
+                              setState(() {
+                                _notificationPermissionGranted = granted;
+                              });
+                            }
+                          },
+                        ),
+                        Icon(
+                          _notificationPermissionGranted
+                              ? Icons.check_circle
+                              : Icons.warning,
+                          color: _notificationPermissionGranted
+                              ? Colors.green
+                              : Colors.orange,
+                        ),
+                      ],
                     ),
                     onTap: () async {
                       final granted =
@@ -179,11 +195,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           SnackBar(
                             content: Text(granted
                                 ? '通知权限已开启'
-                                : '通知权限未开启，请在系统设置中开启'),
+                                : '通知权限未开启，请前往系统设置开启'),
                             duration: const Duration(seconds: 2),
                           ),
                         );
                       }
+                    },
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    title: const Text('系统设置'),
+                    subtitle: const Text('点击后查看如何在系统设置中开启权限'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('请前往手机系统设置 → 应用 → 服药宝 → 通知，开启通知权限'),
+                          duration: Duration(seconds: 4),
+                        ),
+                      );
                     },
                   ),
                 ],
