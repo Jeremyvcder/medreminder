@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../db/database_helper.dart';
 import '../models/medication.dart';
 import '../services/scheduler_service.dart';
+import '../services/notification_service.dart';
 
 /// 药品状态管理Provider
 class MedicationProvider extends ChangeNotifier {
@@ -81,6 +82,8 @@ class MedicationProvider extends ChangeNotifier {
 
       // 批量添加时跳过单独的提醒生成，由调用方统一处理
       if (scheduleReminder) {
+        // 检查并请求通知权限
+        await NotificationService().requestPermissions();
         // 等待数据库操作完成后再生成提醒
         await Future.delayed(const Duration(milliseconds: 300));
         // 生成今日提醒记录
@@ -105,6 +108,8 @@ class MedicationProvider extends ChangeNotifier {
       // 删除该药品的所有pending记录，避免重复
       await _db.deletePendingRecordsByMedicationId(medication.id);
 
+      // 检查并请求通知权限
+      await NotificationService().requestPermissions();
       // 等待数据库操作完成后再生成提醒
       await Future.delayed(const Duration(milliseconds: 300));
       // 重新生成今日提醒
