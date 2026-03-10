@@ -60,8 +60,17 @@ class SettingsProvider extends ChangeNotifier {
   /// 设置语音总开关
   Future<void> setVoiceEnabled(bool value) async {
     _voiceEnabled = value;
+    // 开启时同步开启子开关，关闭时同步关闭子开关
+    _medicineVoiceEnabled = value;
+    _supplementVoiceEnabled = value;
     await _db.setSetting('voice_enabled', value.toString());
-    _voiceService.updateSettings(voiceEnabled: value);
+    await _db.setSetting('voice_medicine_enabled', value.toString());
+    await _db.setSetting('voice_supplement_enabled', value.toString());
+    _voiceService.updateSettings(
+      voiceEnabled: value,
+      medicineVoiceEnabled: value,
+      supplementVoiceEnabled: value,
+    );
     notifyListeners();
   }
 
@@ -70,6 +79,12 @@ class SettingsProvider extends ChangeNotifier {
     _medicineVoiceEnabled = value;
     await _db.setSetting('voice_medicine_enabled', value.toString());
     _voiceService.updateSettings(medicineVoiceEnabled: value);
+    // 如果两个子开关都关闭了，自动关闭总开关
+    if (!value && !_supplementVoiceEnabled) {
+      _voiceEnabled = false;
+      await _db.setSetting('voice_enabled', 'false');
+      _voiceService.updateSettings(voiceEnabled: false);
+    }
     notifyListeners();
   }
 
@@ -78,6 +93,12 @@ class SettingsProvider extends ChangeNotifier {
     _supplementVoiceEnabled = value;
     await _db.setSetting('voice_supplement_enabled', value.toString());
     _voiceService.updateSettings(supplementVoiceEnabled: value);
+    // 如果两个子开关都关闭了，自动关闭总开关
+    if (!value && !_medicineVoiceEnabled) {
+      _voiceEnabled = false;
+      await _db.setSetting('voice_enabled', 'false');
+      _voiceService.updateSettings(voiceEnabled: false);
+    }
     notifyListeners();
   }
 

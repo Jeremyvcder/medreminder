@@ -106,10 +106,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: WarmTheme.spaceLg),
 
-              // 隐私政策
+              // 隐私与协议
               _buildSectionCard(
-                title: '隐私',
+                title: '隐私与协议',
                 children: [
+                  ListTile(
+                    title: const Text('用户协议'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _showUserAgreementDialog(context),
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
                   ListTile(
                     title: const Text('隐私政策'),
                     subtitle: Text(
@@ -238,6 +244,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
               return const SizedBox.shrink();
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 显示用户协议弹窗
+  void _showUserAgreementDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('用户协议'),
+        content: const SingleChildScrollView(
+          child: Text(
+            '服药宝用户协议\n\n'
+            '欢迎使用服药宝！在开始使用本应用前，请仔细阅读以下服务条款。\n\n'
+            '一、服务说明\n'
+            '服药宝是一款帮助用户管理用药提醒的移动应用。我们提供药品提醒、服药记录查询等功能，旨在帮助您更好地管理用药时间。\n\n'
+            '二、账号与数据\n'
+            '1. 本应用无需注册账号，通过设备唯一标识符识别用户\n'
+            '2. 您在使用过程中添加的药品信息、用药记录等数据存储在您的本地设备中\n'
+            '3. 请妥善保管您的设备，因设备丢失或数据清除导致的数据丢失，我们不承担责任\n'
+            '4. 我们不会将您的用药数据上传至服务器或分享给第三方\n\n'
+            '三、用户行为规范\n'
+            '1. 您应保证所提供的药品信息真实准确\n'
+            '2. 请勿将本应用用于任何非法目的\n'
+            '3. 严禁利用本应用传播违法、违规内容\n'
+            '4. 您需对通过本应用添加的所有信息负责\n\n'
+            '四、知识产权\n'
+            '1. 服药宝应用及其所有内容（包括但不限于图标、界面设计、功能实现等）的知识产权归本产品所有\n'
+            '2. 未经授权，任何人不得复制、修改、传播本应用或其中的任何内容\n'
+            '3. 用户在使用本应用过程中产生的任何原创内容，其知识产权归用户所有\n\n'
+            '五、免责声明（重要）\n'
+            '1. 服药提醒仅作为辅助提醒工具，本应用不保证提醒的绝对及时性和准确性\n'
+            '2. 因用户未查看或未按时服药造成的任何后果，包括但不限于病情延误、健康损害等，产品不承担任何责任\n'
+            '3. 本应用提供的用药信息仅供参考，不能替代医疗专业建议\n'
+            '4. 用户应自行承担使用本应用的风险\n'
+            '5. 我们不保证服务完全没有错误或中断\n'
+            '6. 对于因不可抗力或第三方原因导致的服务中断，我们不承担责任\n\n'
+            '六、服务变更\n'
+            '我们保留随时修改或终止服务的权利，恕不另行通知。\n\n'
+            '七、联系方式\n'
+            '如有问题，请联系我们：medreminder@163.com',
+            style: TextStyle(fontSize: 13, height: 1.5),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('关闭'),
           ),
         ],
       ),
