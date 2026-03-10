@@ -13,6 +13,23 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  bool _notificationPermissionGranted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkNotificationPermission();
+  }
+
+  Future<void> _checkNotificationPermission() async {
+    final granted = await NotificationService().checkPermissions();
+    if (mounted) {
+      setState(() {
+        _notificationPermissionGranted = granted;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,14 +157,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   ListTile(
                     title: const Text('通知权限'),
-                    subtitle: const Text('用于接收服药提醒通知'),
-                    trailing: const Icon(Icons.chevron_right),
+                    subtitle: Text(_notificationPermissionGranted
+                        ? '已开启'
+                        : '未开启 - 点击开启'),
+                    trailing: Icon(
+                      _notificationPermissionGranted
+                          ? Icons.check_circle
+                          : Icons.warning,
+                      color: _notificationPermissionGranted
+                          ? Colors.green
+                          : Colors.orange,
+                    ),
                     onTap: () async {
-                      final granted = await NotificationService().requestPermissions();
+                      final granted =
+                          await NotificationService().requestPermissions();
                       if (context.mounted) {
+                        setState(() {
+                          _notificationPermissionGranted = granted;
+                        });
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(granted ? '通知权限已开启' : '通知权限未开启'),
+                            content: Text(granted
+                                ? '通知权限已开启'
+                                : '通知权限未开启，请在系统设置中开启'),
                             duration: const Duration(seconds: 2),
                           ),
                         );

@@ -247,6 +247,33 @@ class NotificationService {
     return granted ?? false;
   }
 
+  /// 检查通知权限是否已授权
+  Future<bool> checkPermissions() async {
+    final ios = _notifications.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>();
+    final android = _notifications.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    bool granted = false;
+    if (ios != null) {
+      // iOS使用checkPermissions
+      final result = await ios.checkPermissions();
+      granted = result?.isEnabled ?? false;
+    } else if (android != null) {
+      // Android检查是否启用了通知
+      final result = await android.areNotificationsEnabled();
+      granted = result ?? false;
+    }
+
+    return granted;
+  }
+
+  /// 跳转到系统应用通知设置页面
+  Future<void> openNotificationSettings() async {
+    // 由于flutter_local_notifications不提供跳转设置的方法
+    // 暂不实现，用户可以在手机系统设置中手动关闭
+  }
+
   /// 生成通知ID（基于药品ID和时间戳）
   static int generateNotificationId(String medicationId, DateTime time) {
     // 使用药品ID的hashCode和时间组合生成唯一ID
