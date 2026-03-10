@@ -72,6 +72,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   }
 
   void _selectMedication(MedicationInfo info) {
+    // 隐藏输入法键盘
+    FocusScope.of(context).unfocus();
+
     setState(() {
       _nameController.text = info.name;
       _dosageController.text = info.defaultDosage;
