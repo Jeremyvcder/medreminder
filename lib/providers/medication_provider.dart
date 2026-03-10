@@ -102,6 +102,9 @@ class MedicationProvider extends ChangeNotifier {
       await _db.updateMedication(updated.id, updated.toMap());
       await loadMedications();
 
+      // 删除该药品的所有pending记录，避免重复
+      await _db.deletePendingRecordsByMedicationId(medication.id);
+
       // 等待数据库操作完成后再生成提醒
       await Future.delayed(const Duration(milliseconds: 300));
       // 重新生成今日提醒

@@ -339,7 +339,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       if (mounted) {
         await context.read<ReminderProvider>().loadTodayReminders();
         if (mounted) {
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(true);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(_isEditing ? '保存成功' : '添加成功')),
           );

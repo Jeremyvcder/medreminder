@@ -305,6 +305,16 @@ class DatabaseHelper {
     );
   }
 
+  /// 删除指定药品的所有pending状态记录
+  Future<int> deletePendingRecordsByMedicationId(String medicationId) async {
+    final db = await database;
+    return await db.delete(
+      'records',
+      where: 'medication_id = ? AND status = ?',
+      whereArgs: [medicationId, 'pending'],
+    );
+  }
+
   // Settings
   Future<String?> getSetting(String key) async {
     final db = await database;

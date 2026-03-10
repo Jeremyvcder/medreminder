@@ -196,12 +196,20 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     return '${date.year}年${date.month}月${date.day}日';
   }
 
-  void _navigateToEdit() {
-    Navigator.of(context).push(
+  Future<void> _navigateToEdit() async {
+    final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => AddMedicationScreen(medication: _medication),
       ),
     );
+    // 如果编辑保存成功，重新加载药品数据
+    if (result == true && mounted) {
+      final provider = context.read<MedicationProvider>();
+      await provider.loadMedications();
+      setState(() {
+        _medication = provider.getMedicationById(widget.medicationId);
+      });
+    }
   }
 
   Future<void> _deactivateMedication() async {
