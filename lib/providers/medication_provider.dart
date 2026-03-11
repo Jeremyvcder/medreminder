@@ -239,14 +239,19 @@ class MedicationProvider extends ChangeNotifier {
   /// 如果是多天计划，会删除整个计划组的所有药品
   Future<bool> deleteMedication(String id) async {
     try {
-      // 先获取药品信息，检查是否是的多天计划
+      // 先获取药品信息
       final medication = getMedicationById(id);
-      if (medication != null && medication.planGroupId != null) {
-        // 多天计划，删除整个计划组
-        await _db.deleteMedicationsByPlanGroupId(medication.planGroupId!);
-      } else {
-        // 普通药品，只删除单个
-        await _db.deleteMedication(id);
+      if (medication != null) {
+        // 删除前先取消该药品的所有未来通知
+        await SchedulerService().cancelMedicationReminders(id);
+
+        if (medication.planGroupId != null) {
+          // 多天计划，删除整个计划组
+          await _db.deleteMedicationsByPlanGroupId(medication.planGroupId!);
+        } else {
+          // 普通药品，只删除单个
+          await _db.deleteMedication(id);
+        }
       }
       await loadMedications();
       return true;

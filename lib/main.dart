@@ -23,13 +23,26 @@ void main() async {
   // 初始化日期格式化（解决LocaleDataException）
   await initializeDateFormatting('zh_CN', null);
 
-  // 初始化数据库
-  await DatabaseHelper().database;
-
-  // 初始化调度服务
-  await SchedulerService().initialize();
-
+  // 先运行App，显示启动画面
   runApp(const MedReminderApp());
+
+  // 在后台初始化数据库和调度服务（不阻塞UI）
+  _initializeServices();
+}
+
+/// 后台初始化服务
+Future<void> _initializeServices() async {
+  try {
+    // 初始化数据库
+    await DatabaseHelper().database;
+    print('数据库初始化完成');
+
+    // 初始化调度服务
+    await SchedulerService().initialize();
+    print('调度服务初始化完成');
+  } catch (e) {
+    print('服务初始化失败: $e');
+  }
 }
 
 class MedReminderApp extends StatefulWidget {

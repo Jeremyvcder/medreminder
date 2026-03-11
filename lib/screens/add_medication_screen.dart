@@ -25,6 +25,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   MedicationCategory _category = MedicationCategory.medicine;
   ScheduleType _scheduleType = ScheduleType.daily;
+  List<int> _selectedWeekdays = [1, 3, 5]; // 默认周一、三、五
+  List<int> _selectedDates = [1, 15]; // 默认1号和15号
   List<TimeOfDay> _reminderTimes = [const TimeOfDay(hour: 8, minute: 0)];
   bool _isMultiDay = false;
   int _multiDayDays = 3;
@@ -46,6 +48,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       _usageController.text = med.usage ?? '';
       _category = med.category;
       _isMultiDay = med.schedule.type == ScheduleType.multiday;
+      _scheduleType = med.schedule.type;
+      if (_scheduleType == ScheduleType.weekly && med.schedule.days != null) {
+        _selectedWeekdays = List.from(med.schedule.days!);
+      }
+      if (_scheduleType == ScheduleType.monthly && med.schedule.dates != null) {
+        _selectedDates = List.from(med.schedule.dates!);
+      }
       if (_isMultiDay) {
         _startDate = med.schedule.startDate ?? DateTime.now();
         _multiDayDays = med.schedule.daysCount ?? 1;
@@ -271,6 +280,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
     final provider = context.read<MedicationProvider>();
 
+    // 处理剂量为空的情况，使用默认值
+    String dosage = _dosageController.text.trim();
+    if (dosage.isEmpty) {
+      dosage = '1片'; // 默认剂量
+    }
+
     final times = _reminderTimes
         .map((t) => '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}')
         .toList();
@@ -281,7 +296,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         final updated = widget.medication!.copyWith(
           name: _nameController.text,
           category: _category,
-          dosage: _dosageController.text,
+          dosage: dosage,
           usage: _usageController.text.isEmpty ? null : _usageController.text,
           schedule: Schedule.daily(times),
         );
@@ -289,12 +304,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       } else if (_isMultiDay) {
         // 创建多天计划
         final dosages = _useUniformDosage || _dailyDosages.isEmpty
-            ? List.generate(_multiDayDays, (_) => _dosageController.text)
+            ? List.generate(_multiDayDays, (_) => dosage)
             : _dailyDosages;
         await provider.createMultiDayPlan(
           name: _nameController.text,
           category: _category,
-          dosage: _dosageController.text,
+          dosage: dosage,
           usage: _usageController.text.isEmpty ? null : _usageController.text,
           startDate: _startDate,
           daysCount: _multiDayDays,
@@ -309,10 +324,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           schedule = Schedule.daily(times);
           break;
         case ScheduleType.weekly:
-          schedule = Schedule.weekly([1, 3, 5], times); // 默认周一三五
+          schedule = Schedule.weekly(_selectedWeekdays, times);
           break;
         case ScheduleType.monthly:
-          schedule = Schedule.monthly([1, 15], times); // 默认1号和15号
+          schedule = Schedule.monthly(_selectedDates, times);
           break;
         default:
           schedule = Schedule.daily(times);
@@ -321,7 +336,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       await provider.addMedication(
         name: _nameController.text,
         category: _category,
-        dosage: _dosageController.text,
+        dosage: dosage,
         usage: _usageController.text.isEmpty ? null : _usageController.text,
         schedule: schedule,
       );
@@ -444,15 +459,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               controller: _dosageController,
               decoration: InputDecoration(
                 labelText: '剂量',
-                hintText: '如：1片、2粒',
+                hintText: '如：1片、2粒（不填时默认为1片）',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '请输入剂量';
-                }
+                // 剂量可以为空，使用默认值
                 return null;
               },
             ),
@@ -615,6 +628,117 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               icon: const Icon(Icons.add),
               label: const Text('添加提醒时间'),
             ),
+            const SizedBox(height: 16),
+
+            // 重复类型选择（仅在非多天计划时显示）
+            if (!_isMultiDay) ...[
+              const Text(
+                '重复类型',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SegmentedButton<ScheduleType>(
+                segments: const [
+                  ButtonSegment(
+                    value: ScheduleType.daily,
+                    label: Text('每日'),
+                    icon: Icon(Icons.today),
+                  ),
+                  ButtonSegment(
+                    value: ScheduleType.weekly,
+                    label: Text('每周'),
+                    icon: Icon(Icons.calendar_view_week),
+                  ),
+                  ButtonSegment(
+                    value: ScheduleType.monthly,
+                    label: Text('每月'),
+                    icon: Icon(Icons.calendar_month),
+                  ),
+                ],
+                selected: {_scheduleType},
+                onSelectionChanged: (value) {
+                  setState(() {
+                    _scheduleType = value.first;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // 每周选择（选择星期几）
+              if (_scheduleType == ScheduleType.weekly) ...[
+                const Text(
+                  '选择星期',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (int i = 1; i <= 7; i++)
+                      FilterChip(
+                        label: Text(['周一', '周二', '周三', '周四', '周五', '周六', '周日'][i - 1]),
+                        selected: _selectedWeekdays.contains(i),
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedWeekdays.add(i);
+                            } else if (_selectedWeekdays.length > 1) {
+                              _selectedWeekdays.remove(i);
+                            }
+                          });
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // 每月选择（选择日期）
+              if (_scheduleType == ScheduleType.monthly) ...[
+                const Text(
+                  '选择日期',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 150,
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (int i = 1; i <= 31; i++)
+                          FilterChip(
+                            label: Text('$i'),
+                            selected: _selectedDates.contains(i),
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  _selectedDates.add(i);
+                                  _selectedDates.sort();
+                                } else if (_selectedDates.length > 1) {
+                                  _selectedDates.remove(i);
+                                }
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ],
+
             const SizedBox(height: 24),
 
             // 保存按钮

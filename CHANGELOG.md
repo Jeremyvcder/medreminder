@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 通知点击后无导航问题
 - 编辑药品提醒时间后详情页不更新问题
 - 编辑药品后首页出现重复记录问题
+- 设置页面应用权限优化：移除刷新按钮和系统设置项
+- 设置页面：实时获取通知权限开启状态
+- 通知调度：移除Future.microtask包装，直接await调用通知服务
 
 ### Added (阶段8: 欢迎页面)
 - 欢迎页面（Splash Screen）：绿色渐变背景 + 医疗图标 + 标语
