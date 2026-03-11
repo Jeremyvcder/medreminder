@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 通知点击导航：点击服药提醒通知后自动跳转到首页
 - 单元测试：添加Medication和Record模型的单元测试
 - 代码分析：flutter analyze无警告无错误
+- 每周提醒UI：支持选择星期几提醒
+- 每月提醒UI：支持选择日期提醒
+- 语音播报：TTS引擎优化，免打扰时段控制
 
 ### Fixed
 - 通知点击后无导航问题
@@ -19,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 设置页面应用权限优化：移除刷新按钮和系统设置项
 - 设置页面：实时获取通知权限开启状态
 - 通知调度：移除Future.microtask包装，直接await调用通知服务
+- 删除药品后通知和语音提醒仍触发的问题
+- 稍后提醒后重新进入app出现原时间重复提醒
+- 稍后提醒时间到达时没有语音提醒
+- 手动输入药品名称时代剂必须手动输入的问题
+- 同一天内多次提醒第二个不触发的问题
 
 ### Added (阶段8: 欢迎页面)
 - 欢迎页面（Splash Screen）：绿色渐变背景 + 医疗图标 + 标语
