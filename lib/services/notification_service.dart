@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -52,6 +53,12 @@ class NotificationService {
 
   /// 创建通知渠道（Android 8.0+）
   Future<void> _createNotificationChannel() async {
+    // 先删除旧渠道
+    await _notifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.deleteNotificationChannel('medication_reminder');
+
     const channel = AndroidNotificationChannel(
       'medication_reminder',
       '用药提醒',
@@ -124,7 +131,7 @@ class NotificationService {
     String? payload,
     DateTime? scheduledTime,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'medication_reminder',
       '用药提醒',
       channelDescription: '药品和保健品服用提醒通知',
@@ -132,7 +139,8 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification_small',
+      largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -141,7 +149,7 @@ class NotificationService {
       presentSound: true,
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -173,7 +181,7 @@ class NotificationService {
     required DateTime scheduledTime,
     String? payload,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'medication_reminder',
       '用药提醒',
       channelDescription: '药品和保健品服用提醒通知',
@@ -181,6 +189,8 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
+      icon: '@drawable/ic_notification_small',
+      largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -189,7 +199,7 @@ class NotificationService {
       presentSound: true,
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
