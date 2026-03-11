@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - 通知点击后无导航问题
 - 编辑药品提醒时间后详情页不更新问题
+- 移除通知服务调试代码，优化通知图标配置
 - 编辑药品后首页出现重复记录问题
 - 设置页面应用权限优化：移除刷新按钮和系统设置项
 - 设置页面：实时获取通知权限开启状态
