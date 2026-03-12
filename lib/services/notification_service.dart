@@ -24,8 +24,8 @@ class NotificationService {
     // 初始化时区
     tz_data.initializeTimeZones();
 
-    // Android设置 - 使用应用图标
-    const androidSettings = AndroidInitializationSettings('ic_launcher');
+    // Android设置 - 使用应用图标（mipmap资源）
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // iOS设置
     const iosSettings = DarwinInitializationSettings(
@@ -138,8 +138,9 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
-      icon: 'ic_launcher',
-      largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
+      icon: '@mipmap/ic_launcher',
+      category: AndroidNotificationCategory.alarm,
+      styleInformation: BigTextStyleInformation(body),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -188,8 +189,9 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
-      icon: 'ic_launcher',
-      largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
+      icon: '@mipmap/ic_launcher',
+      category: AndroidNotificationCategory.alarm,
+      styleInformation: BigTextStyleInformation(body),
     );
 
     const iosDetails = DarwinNotificationDetails(
