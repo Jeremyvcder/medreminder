@@ -139,7 +139,7 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
-      icon: '@mipmap/ic_notification_small',
+      icon: '@mipmap/ic_launcher',
       largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
     );
 
@@ -189,7 +189,7 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
-      icon: '@mipmap/ic_notification_small',
+      icon: '@mipmap/ic_launcher',
       largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
     );
 
