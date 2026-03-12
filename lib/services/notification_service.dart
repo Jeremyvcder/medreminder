@@ -25,8 +25,8 @@ class NotificationService {
     // 初始化时区
     tz_data.initializeTimeZones();
 
-    // Android设置
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Android设置 - 使用纯白色图标用于通知栏
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_notification');
 
     // iOS设置
     const iosSettings = DarwinInitializationSettings(
@@ -139,6 +139,7 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
+      icon: '@mipmap/ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
     );
 
@@ -188,6 +189,7 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
+      icon: '@mipmap/ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('ic_launcher'),
     );
 
