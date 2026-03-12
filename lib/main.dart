@@ -136,33 +136,6 @@ class _MedReminderAppState extends State<MedReminderApp> {
       ),
     );
   }
-
-  /// 显示通知权限引导弹窗
-  void _showNotificationPermissionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('通知权限'),
-        content: const Text(
-          '服药宝需要通知权限来提醒您服药。\n\n是否开启通知权限？',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('暂不开启'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await NotificationService().requestPermissions();
-            },
-            child: const Text('去开启'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// 隐私政策页面（首次引导）
@@ -202,7 +175,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage>
             children: [
               const Spacer(),
               Icon(
-                Icons.medical_services,
+                Icons.medication,
                 size: 80,
                 color: WarmTheme.primary,
               ),
@@ -401,8 +374,8 @@ class _MainScreenState extends State<MainScreen> {
             label: '首页',
           ),
           NavigationDestination(
-            icon: Icon(Icons.medical_services_outlined),
-            selectedIcon: Icon(Icons.medical_services),
+            icon: Icon(Icons.medication_outlined),
+            selectedIcon: Icon(Icons.medication),
             label: '药箱',
           ),
           NavigationDestination(
