@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter_tts/flutter_tts.dart';
 
 /// 语音播报服务 - 使用TTS引擎播报服药提醒
@@ -48,11 +47,15 @@ class VoiceService {
         );
       } else if (type == 'merged') {
         final medsData = data['data'] as List<dynamic>;
-        final medications = medsData.map((m) => {
-          'name': (m as Map<String, dynamic>)['name'] as String,
-          'dosage': m['dosage'] as String,
-          'isMedicine': m['isMedicine'] as String,
-        }).toList();
+        final medications = medsData
+            .map(
+              (m) => {
+                'name': (m as Map<String, dynamic>)['name'] as String,
+                'dosage': m['dosage'] as String,
+                'isMedicine': m['isMedicine'] as String,
+              },
+            )
+            .toList();
         await voiceService.speakMergedReminder(medications: medications);
       }
     } catch (e) {
@@ -171,7 +174,8 @@ class VoiceService {
 
   /// 播报合并提醒（多个药品）
   Future<void> speakMergedReminder({
-    required List<Map<String, String>> medications, // [{name, dosage, isMedicine}]
+    required List<Map<String, String>>
+    medications, // [{name, dosage, isMedicine}]
   }) async {
     // 检查语音开关
     if (!_voiceEnabled) return;
@@ -211,7 +215,9 @@ class VoiceService {
 
   /// 执行实际播报
   Future<void> _speak(String text) async {
-    print('语音播报开始: $text, voiceEnabled=$_voiceEnabled, isInitialized=$_isInitialized');
+    print(
+      '语音播报开始: $text, voiceEnabled=$_voiceEnabled, isInitialized=$_isInitialized',
+    );
     try {
       if (_isSpeaking) {
         await _tts.stop();

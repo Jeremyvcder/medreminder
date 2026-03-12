@@ -373,7 +373,7 @@ class _EmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.medical_services_outlined,
+            Icons.medication_outlined,
             size: 80,
             color: theme.colorScheme.outlineVariant,
           ),

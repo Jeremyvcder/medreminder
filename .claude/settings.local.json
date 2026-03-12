@@ -22,7 +22,10 @@
       "Bash(\"C:/Users/heisj/AppData/Roaming/npm/mcp-cli\" --config \"d:/Programs/medreminder/mcp-config.json\" call-tool pencil:batch_design --args '{\"\"operations\"\":\"\"doneRow=I\\(\\\\\"\"fzoq9\\\\\"\", {type: \\\\\"\"frame\\\\\"\", layout: \\\\\"\"horizontal\\\\\"\", width: \\\\\"\"fill_container\\\\\"\", align: \\\\\"\"center\\\\\"\"}\\)\\\\ncheckIcon=I\\(doneRow, {type: \\\\\"\"text\\\\\"\", content: \\\\\"\"✓\\\\\"\", fontSize: 14, fill: \\\\\"\"#10B981\\\\\"\"}\\)\\\\ndoneMed=I\\(doneRow, {type: \\\\\"\"text\\\\\"\", content: \\\\\"\"维生素C - 1片\\\\\"\", fontSize: 14, fill: \\\\\"\"#9CA3AF\\\\\"\", width: \\\\\"\"fill_container\\\\\"\"}\\)\"\"}')",
       "Bash(\"C:/Users/heisj/AppData/Roaming/npm/mcp-cli\" --config \"d:/Programs/medreminder/mcp-config.json\" call-tool pencil:batch_design --args '{\"\"operations\"\":\"\"fab=I\\(\\\\\"\"DEGtm\\\\\"\", {type: \\\\\"\"frame\\\\\"\", width: 56, height: 56, background: \\\\\"\"#4A90D9\\\\\"\", cornerRadius: 28, x: 318, y: 756, shadow: \\\\\"\"0 4 12 rgba\\(0,0,0,0.15\\)\\\\\"\"}\\)\\\\nplus=I\\(fab, {type: \\\\\"\"text\\\\\"\", content: \\\\\"\"+\\\\\"\", fontSize: 32, fill: \\\\\"\"#FFFFFF\\\\\"\", layout: \\\\\"\"center\\\\\"\"}\\)\"\"}')",
       "Bash(flutter build apk --debug)",
-      "Bash(flutter analyze)"
+      "Bash(flutter analyze)",
+      "mcp__minimax__understand_image",
+      "Bash(git commit:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true
 }

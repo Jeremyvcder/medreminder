@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 语音播报：TTS引擎优化，免打扰时段控制
 
 ### Fixed
+- Release版本通知弹窗不显示：使用mipmap资源图标、添加category和BigTextStyleInformation样式
 - 通知点击后无导航问题
 - 编辑药品提醒时间后详情页不更新问题
 - 移除通知服务调试代码，优化通知图标配置

@@ -169,6 +169,19 @@ class SchedulerService {
       dosage: medication.dosage,
       isMedicine: medication.category == MedicationCategory.medicine,
     );
+
+    // 安排重复提醒（第2、3、4次）
+    final records = await _db.getRecords(
+      medicationId: medication.id,
+      startDate: scheduledTime.subtract(const Duration(minutes: 1)),
+      endDate: scheduledTime.add(const Duration(minutes: 1)),
+    );
+    if (records.isNotEmpty) {
+      final recordId = records.first['id'] as String;
+      for (int i = 1; i <= maxRepeatCount; i++) {
+        await scheduleRepeatReminder(recordId, i);
+      }
+    }
   }
 
   /// 定时语音提醒
@@ -311,7 +324,30 @@ class SchedulerService {
     Medication medication,
     DateTime scheduledTime,
   ) async {
-    // 检查是否已存在该时间点的记录（±1分钟内）
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+
+    // 检查该药品今天是否已有任何状态的记录
+    final todayRecords = await _db.getRecords(
+      medicationId: medication.id,
+      startDate: today,
+      endDate: tomorrow,
+    );
+
+    // 如果计划时间已过，且今天该药品已有记录，不创建新记录
+    // 这避免了在用户点击"稍后"→"已服"后，定时器重新创建原时间记录的问题
+    if (scheduledTime.isBefore(now) && todayRecords.isNotEmpty) {
+      return false; // 计划时间已过且已有记录
+    }
+
+    // 如果今天已有pending记录，不创建新记录（避免重复创建）
+    final hasPendingRecord = todayRecords.any((r) => r['status'] == 'pending');
+    if (hasPendingRecord) {
+      return false; // 已有待服记录
+    }
+
+    // 检查是否已存在该时间点的记录（±1分钟内）- 作为额外检查
     final existingRecords = await _db.getRecords(
       medicationId: medication.id,
       startDate: scheduledTime.subtract(const Duration(minutes: 1)),
@@ -343,8 +379,8 @@ class SchedulerService {
       final record = Record.fromMap(recordMap);
       if (record.status == RecordStatus.pending) {
         final scheduledTime = record.scheduledTime;
-        // 如果提醒时间已过15分钟，标记为错过
-        if (now.difference(scheduledTime).inMinutes >= 15) {
+        // 如果提醒时间已过60分钟，标记为错过
+        if (now.difference(scheduledTime).inMinutes >= 60) {
           await _db.updateRecord(record.id, {
             ...record.toMap(),
             'status': 'missed',
@@ -360,10 +396,13 @@ class SchedulerService {
     final recordMap = records.firstWhere((r) => r['id'] == recordId);
     final medicationId = recordMap['medication_id'] as String;
 
+    // 更新记录状态，并将 scheduled_time 更新为实际时间（避免定时器重新创建记录）
+    final now = DateTime.now();
     await _db.updateRecord(recordId, {
       ...recordMap,
       'status': 'taken',
-      'actual_time': DateTime.now().toIso8601String(),
+      'scheduled_time': now.toIso8601String(),
+      'actual_time': now.toIso8601String(),
     });
 
     // 取消该药品的后续重复提醒
@@ -372,6 +411,19 @@ class SchedulerService {
       DateTime.parse(recordMap['scheduled_time']),
     );
     await _notificationService.cancelNotification(notificationId);
+
+    // 取消所有重复提醒（第1、2、3次）- 使用与安排时相同的 repeatTime
+    final scheduledTime = DateTime.parse(recordMap['scheduled_time']);
+    for (int i = 1; i <= maxRepeatCount; i++) {
+      final repeatTime = scheduledTime.add(
+        Duration(minutes: repeatIntervalMinutes * i),
+      );
+      final repeatNotificationId = NotificationService.generateNotificationId(
+        '$medicationId\_repeat$i',
+        repeatTime,
+      );
+      await _notificationService.cancelNotification(repeatNotificationId);
+    }
 
     // 取消该药品的语音提醒Timer
     _cancelVoiceTimers(medicationId);
@@ -383,11 +435,14 @@ class SchedulerService {
     final recordMap = records.firstWhere((r) => r['id'] == recordId);
     final medicationId = recordMap['medication_id'] as String;
 
+    // 更新记录状态，并将 scheduled_time 更新为实际时间（避免定时器重新创建记录）
+    final now = DateTime.now();
     await _db.updateRecord(recordId, {
       ...recordMap,
       'status': 'skipped',
+      'scheduled_time': now.toIso8601String(),
       'skip_reason': reason,
-      'actual_time': DateTime.now().toIso8601String(),
+      'actual_time': now.toIso8601String(),
     });
 
     // 取消该药品的后续重复提醒
@@ -396,6 +451,19 @@ class SchedulerService {
       DateTime.parse(recordMap['scheduled_time']),
     );
     await _notificationService.cancelNotification(notificationId);
+
+    // 取消所有重复提醒（第1、2、3次）- 使用与安排时相同的 repeatTime
+    final scheduledTime = DateTime.parse(recordMap['scheduled_time']);
+    for (int i = 1; i <= maxRepeatCount; i++) {
+      final repeatTime = scheduledTime.add(
+        Duration(minutes: repeatIntervalMinutes * i),
+      );
+      final repeatNotificationId = NotificationService.generateNotificationId(
+        '$medicationId\_repeat$i',
+        repeatTime,
+      );
+      await _notificationService.cancelNotification(repeatNotificationId);
+    }
 
     // 取消该药品的语音提醒Timer
     _cancelVoiceTimers(medicationId);
@@ -423,6 +491,18 @@ class SchedulerService {
       scheduledTime,
     );
     await _notificationService.cancelNotification(oldNotificationId);
+
+    // 取消原有重复提醒（第1、2、3次）- 使用与安排时相同的 repeatTime
+    for (int i = 1; i <= maxRepeatCount; i++) {
+      final repeatTime = scheduledTime.add(
+        Duration(minutes: repeatIntervalMinutes * i),
+      );
+      final repeatNotificationId = NotificationService.generateNotificationId(
+        '$medicationId\_repeat$i',
+        repeatTime,
+      );
+      await _notificationService.cancelNotification(repeatNotificationId);
+    }
 
     // 取消原语音提醒Timer
     _cancelVoiceTimers(medicationId);
@@ -453,20 +533,32 @@ class SchedulerService {
       dosage: medication.dosage,
       isMedicine: medication.category == MedicationCategory.medicine,
     );
+
+    // 为新时间安排重复提醒（第1、2、3次）
+    for (int i = 1; i <= maxRepeatCount; i++) {
+      await scheduleRepeatReminder(recordId, i);
+    }
   }
 
   /// 安排重复提醒
   Future<void> scheduleRepeatReminder(String recordId, int repeatCount) async {
-    if (repeatCount >= maxRepeatCount) return;
+    if (repeatCount > maxRepeatCount) return;
 
     final records = await _db.getRecords();
     final recordMap = records.firstWhere((r) => r['id'] == recordId);
+    final recordStatus = recordMap['status'] as String;
+
+    // 只有 pending 状态才安排重复提醒（已服/已跳过/已错过不安排）
+    if (recordStatus != 'pending') {
+      return;
+    }
+
     final medicationId = recordMap['medication_id'];
     final scheduledTime = DateTime.parse(recordMap['scheduled_time']);
 
-    // 计算重复提醒时间（15分钟后）
+    // 计算重复提醒时间（累计：15分钟后、30分钟后、45分钟后）
     final repeatTime = scheduledTime.add(
-      Duration(minutes: repeatIntervalMinutes),
+      Duration(minutes: repeatIntervalMinutes * repeatCount),
     );
 
     // 获取药品信息
@@ -476,7 +568,7 @@ class SchedulerService {
     );
     final medication = Medication.fromMap(medicationMap);
 
-    // 安排重复提醒
+    // 安排重复提醒（通知）
     final notificationId = NotificationService.generateNotificationId(
       '$medicationId\_repeat$repeatCount',
       repeatTime,
@@ -488,6 +580,15 @@ class SchedulerService {
       body: '请服用${medication.name}，${medication.dosage}',
       scheduledTime: repeatTime,
       payload: recordId,
+    );
+
+    // 安排重复提醒（语音）
+    _scheduleVoiceReminder(
+      medicationId: medicationId,
+      scheduledTime: repeatTime,
+      medicationName: medication.name,
+      dosage: medication.dosage,
+      isMedicine: medication.category == MedicationCategory.medicine,
     );
   }
 

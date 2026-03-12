@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/medication.dart';
 import '../services/notification_service.dart';
@@ -29,6 +30,23 @@ class ReminderProvider extends ChangeNotifier {
 
   // 合并提醒分组
   final Map<int, List<ReminderItem>> _mergedReminders = {};
+
+  // 定时器：每分钟刷新一次数据（用于同步错过状态等后台变化）
+  Timer? _refreshTimer;
+
+  ReminderProvider() {
+    // 启动定时刷新
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      loadTodayReminders();
+      loadCompletedReminders();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
 
   List<ReminderItem> get pendingReminders => _pendingReminders;
   List<ReminderItem> get completedReminders => _completedReminders;
