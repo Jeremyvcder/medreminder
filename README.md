@@ -1,9 +1,6 @@
-# 服药宝 (MedReminder)
-
-一款专为需要长期服药人群设计的智能用药提醒App，帮助您轻松管理用药时间，再也不怕忘记服药。
-
-## 标语
-服药宝，守护您的用药健康
+# medreminder
+## 应用名称
+服药宝
 
 ## 应用简介
 服药宝是一款专为需要长期服药人群设计的智能用药提醒App，帮助您轻松管理用药时间，再也不怕忘记服药。无论是定时服药还是事件驱动型用药需求，都能满足。
@@ -50,27 +47,49 @@
 
 ---
 
-## 技术栈
+## Play Store 英文描述
 
-- Flutter + Dart
-- Provider (状态管理)
-- SQLCipher (加密数据库)
-- flutter_local_notifications (本地通知)
-- 隐私优先：数据仅本地存储
+**App Name:** MedReminder
 
-## 构建
+**Tagline:** Your personal medication reminder assistant
 
-```bash
-# 获取依赖
-flutter pub get
+**Description:**
+MedReminder is a smart medication reminder app designed for people who need to take medication regularly. Whether it's scheduled dosing or event-driven medication needs, we've got you covered!
 
-# 调试构建
-flutter build apk --debug
+**Features:**
+- Smart reminders: Daily, weekly, monthly, and custom interval options
+- Event-driven reminders: Trigger medication reminders after specific events (e.g., PrEP 2+1+1 protocol)
+- Notification + voice broadcast to ensure you never miss a dose
+- Repeat reminders if you don't respond
+- Complete medication history tracking
+- Local data storage, privacy protected
+- Easy-to-use interface with large text mode
 
-# 发布构建
-flutter build apk --release
-```
+**Privacy Policy:**
+- All medication data is stored locally on your device only
+- We do not collect or upload any personal health data
+- No ads or tracking
+- Your privacy is our priority
 
-## License
+**Target Users:**
+- Chronic disease patients
+- PrEP users
+- Elderly people and their families
+- Anyone managing long-term medication
 
-MIT
+**Contact:** medreminder@163.com
+
+
+## Getting Started
+
+This project is a starting point for a Flutter application.
+
+A few resources to get you started if this is your first Flutter project:
+
+- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
