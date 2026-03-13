@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (阶段10: 应用商店准备)
+
+### Fixed
+- 重复提醒功能：修复通知ID不匹配、时间计算错误、条件判断错误等问题
+- 已服/跳过仍收到重复提醒：修复通知ID计算逻辑
+- 错过需要手动刷新：添加首页定时自动刷新（每分钟）
+- 稍后→已服后原提醒重复出现：修复记录创建逻辑
+- 调整错过判断时间：从15分钟改为60分钟
+- 重复提醒添加语音播报
+
 ### Added (阶段9: 测试与Bug修复)
 - 通知点击导航：点击服药提醒通知后自动跳转到首页
 - 单元测试：添加Medication和Record模型的单元测试

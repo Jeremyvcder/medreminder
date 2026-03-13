@@ -328,26 +328,50 @@ class SchedulerService {
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
 
-    // 检查该药品今天是否已有任何状态的记录
+    // 检查该药品今天是否已有记录
     final todayRecords = await _db.getRecords(
       medicationId: medication.id,
       startDate: today,
       endDate: tomorrow,
     );
 
-    // 如果计划时间已过，且今天该药品已有记录，不创建新记录
-    // 这避免了在用户点击"稍后"→"已服"后，定时器重新创建原时间记录的问题
-    if (scheduledTime.isBefore(now) && todayRecords.isNotEmpty) {
-      return false; // 计划时间已过且已有记录
-    }
-
-    // 如果今天已有pending记录，不创建新记录（避免重复创建）
+    // 1. 检查是否有 pending 记录 - 如果有，不创建
     final hasPendingRecord = todayRecords.any((r) => r['status'] == 'pending');
     if (hasPendingRecord) {
       return false; // 已有待服记录
     }
 
-    // 检查是否已存在该时间点的记录（±1分钟内）- 作为额外检查
+    // 2. 根据提醒类型决定
+    final scheduleType = medication.schedule.type;
+
+    switch (scheduleType) {
+      case ScheduleType.daily:
+        // 每日提醒：每天都创建，即使今天已服/跳过
+        // 只检查是否有pending记录（上面已检查）
+        break;
+
+      case ScheduleType.weekly:
+      case ScheduleType.monthly:
+        // 每周/每月提醒：只在设定日期创建
+        // 如果今天已有任何记录（包括taken/skipped/missed），不创建
+        if (todayRecords.isNotEmpty) {
+          return false;
+        }
+        break;
+
+      case ScheduleType.multiday:
+        // 多天计划：根据计划逻辑，如果今天已有记录，不创建
+        if (todayRecords.isNotEmpty) {
+          return false;
+        }
+        break;
+
+      // interval在当前产品UI中不可见，暂时按daily逻辑处理
+      case ScheduleType.interval:
+        break;
+    }
+
+    // 3. 检查是否已存在该时间点的记录（±1分钟内）- 作为额外检查
     final existingRecords = await _db.getRecords(
       medicationId: medication.id,
       startDate: scheduledTime.subtract(const Duration(minutes: 1)),

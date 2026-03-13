@@ -141,6 +141,7 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
       category: AndroidNotificationCategory.alarm,
       styleInformation: BigTextStyleInformation(body),
+      fullScreenIntent: true, // 允许全屏意图，确保通知显示
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -162,7 +163,7 @@ class NotificationService {
         body,
         tz.TZDateTime.from(scheduledTime, tz.local),
         details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.alarmClock, // 使用AlarmManager确保通知触发
         payload: payload,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
@@ -192,6 +193,7 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
       category: AndroidNotificationCategory.alarm,
       styleInformation: BigTextStyleInformation(body),
+      fullScreenIntent: true, // 允许全屏意图，确保通知显示
     );
 
     const iosDetails = DarwinNotificationDetails(
