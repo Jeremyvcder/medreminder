@@ -1,6 +1,7 @@
-# 服药宝 (MedReminder)
+# 应用商店描述文案
 
-一款专为需要长期服药人群设计的智能用药提醒App，帮助您轻松管理用药时间，再也不怕忘记服药。
+## 应用名称
+服药宝
 
 ## 标语
 服药宝，守护您的用药健康
@@ -50,27 +51,34 @@
 
 ---
 
-## 技术栈
+## Play Store 英文描述
 
-- Flutter + Dart
-- Provider (状态管理)
-- SQLCipher (加密数据库)
-- flutter_local_notifications (本地通知)
-- 隐私优先：数据仅本地存储
+**App Name:** MedReminder
 
-## 构建
+**Tagline:** Your personal medication reminder assistant
 
-```bash
-# 获取依赖
-flutter pub get
+**Description:**
+MedReminder is a smart medication reminder app designed for people who need to take medication regularly. Whether it's scheduled dosing or event-driven medication needs, we've got you covered!
 
-# 调试构建
-flutter build apk --debug
+**Features:**
+- Smart reminders: Daily, weekly, monthly, and custom interval options
+- Event-driven reminders: Trigger medication reminders after specific events (e.g., PrEP 2+1+1 protocol)
+- Notification + voice broadcast to ensure you never miss a dose
+- Repeat reminders if you don't respond
+- Complete medication history tracking
+- Local data storage, privacy protected
+- Easy-to-use interface with large text mode
 
-# 发布构建
-flutter build apk --release
-```
+**Privacy Policy:**
+- All medication data is stored locally on your device only
+- We do not collect or upload any personal health data
+- No ads or tracking
+- Your privacy is our priority
 
-## License
+**Target Users:**
+- Chronic disease patients
+- PrEP users
+- Elderly people and their families
+- Anyone managing long-term medication
 
-MIT
+**Contact:** medreminder@163.com
