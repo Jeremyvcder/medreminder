@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added (阶段10: 应用商店准备)
 
 ### Fixed
+- 删除药品后重复提醒仍触发：取消提醒时同时取消重复提醒通知
 - 重复提醒功能：修复通知ID不匹配、时间计算错误、条件判断错误等问题
 - 已服/跳过仍收到重复提醒：修复通知ID计算逻辑
 - 错过需要手动刷新：添加首页定时自动刷新（每分钟）
