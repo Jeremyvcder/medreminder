@@ -762,6 +762,28 @@ class SchedulerService {
       }
     }
 
+    // 取消该药品所有 pending 记录的重复提醒
+    final allRecords = await _db.getRecords();
+    final pendingRecords = allRecords
+        .where((r) =>
+            r['medication_id'] == medicationId && r['status'] == 'pending')
+        .toList();
+
+    for (final record in pendingRecords) {
+      final scheduledTime = DateTime.parse(record['scheduled_time']);
+      // 取消所有重复提醒（第1、2、3次）
+      for (int i = 1; i <= maxRepeatCount; i++) {
+        final repeatTime = scheduledTime.add(
+          Duration(minutes: repeatIntervalMinutes * i),
+        );
+        final repeatNotificationId = NotificationService.generateNotificationId(
+          '$medicationId\_repeat$i',
+          repeatTime,
+        );
+        await _notificationService.cancelNotification(repeatNotificationId);
+      }
+    }
+
     // 取消语音提醒Timer
     _cancelVoiceTimers(medicationId);
   }
